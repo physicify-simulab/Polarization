@@ -1,0 +1,272 @@
+/* --- START OF FILE intro_style.css --- */
+
+/* --- General Body/Layout Styles --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    line-height: 1.6;
+    margin: 0;
+    background-color: #f8f9fa; /* Slightly lighter background */
+    color: #343a40;
+    font-size: 16px;
+}
+
+.intro-container {
+    max-width: 900px; /* Limit width for readability */
+    margin: 20px auto; /* Center content horizontally, add top/bottom margin */
+    padding: 15px 25px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+h1, h2 {
+    color: #212529;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.2em;
+    margin-top: 10px;
+}
+
+h2 {
+    font-size: 1.6em;
+    margin-top: 35px;
+    text-align: left; /* Keep section headers left-aligned */
+}
+
+/* --- Simulator Preview Section --- */
+.simulator-preview {
+    position: relative; /* Needed for absolute positioning of the play button */
+    margin: 25px auto; /* Center block */
+    display: block; /* Ensure it takes block-level space */
+    max-width: 100%; /* Ensure it fits within container */
+    cursor: pointer; /* Indicate the whole area is clickable */
+    border-radius: 6px; /* Match image radius */
+    overflow: hidden; /* Ensure play button doesn't overflow rounded corners */
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.simulator-preview img {
+    display: block; /* Remove potential space below image */
+    width: 100%; /* Make image fill the container */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 6px; /* Rounded corners for the image */
+    transition: transform 0.3s ease; /* Slight zoom effect on hover */
+}
+
+.simulator-preview:hover img {
+    transform: scale(1.02); /* Slightly zoom image on hover */
+}
+
+/* --- Play Button --- */
+.play-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.1); /* Slight dark overlay */
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.play-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px; /* Size of the button background */
+    height: 80px;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    border-radius: 50%; /* Circular button */
+    opacity: 0.5; /* 50% transparent as requested */
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.play-button i.fa-play {
+    font-size: 36px; /* Size of the play icon */
+    color: #343a40; /* Dark icon color */
+    /* Adjust icon position slightly if needed */
+    transform: translateX(2px);
+}
+
+.simulator-preview:hover .play-link {
+    background-color: rgba(0, 0, 0, 0.2); /* Darken overlay slightly on hover */
+}
+
+.simulator-preview:hover .play-button {
+    opacity: 0.85; /* Make button less transparent on hover */
+    transform: scale(1.1); /* Enlarge button slightly on hover */
+    background-color: rgba(255, 255, 255, 0.95); /* Make background less transparent */
+}
+
+/* --- Information Section (Modified) --- */
+.info-section {
+    text-align: center;
+    margin: 25px 0;
+    padding: 15px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95em;
+    color: #495057;
+    line-height: 1.5; /* Adjusted line height for single line */
+}
+
+.info-section p {
+    margin: 0; /* Remove default margin from p */
+}
+
+/* Style the separator */
+.info-separator {
+    margin: 0 10px; /* Space around the separator */
+    color: #adb5bd; /* Lighter color for separator */
+}
+
+.info-section a {
+    color: #0056b3;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    white-space: nowrap; /* Prevent link text wrapping */
+}
+
+.info-section a:hover {
+    color: #003d80;
+    text-decoration: underline;
+}
+
+.info-section i {
+    margin-right: 4px; /* Slightly reduced space */
+    color: #6c757d;
+    vertical-align: baseline;
+}
+
+.info-section a:hover i {
+    color: #003d80;
+}
+
+/* Allow wrapping on smaller screens */
+@media (max-width: 480px) {
+    .info-section {
+        line-height: 1.8; /* Increase line height if it wraps */
+    }
+    .info-separator {
+        display: block; /* Stack separator on its own line */
+        margin: 5px auto; /* Center separator when stacked */
+        width: 20px; /* Give it some width */
+        border-top: 1px solid #eee; /* Make it a line */
+        color: transparent; /* Hide the pipe character */
+    }
+    .author-info, .source-info {
+        display: block; /* Make author/source stack */
+        margin-bottom: 3px;
+    }
+}
+
+/* --- Description Section --- */
+.description {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    padding: 0 10px; /* Add slight horizontal padding */
+}
+
+.description p {
+    margin-bottom: 15px;
+    text-align: justify;
+}
+
+/* --- Comments Section --- */
+.comments-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.comments-section h2 {
+    border-bottom: none; /* Remove border from H2 within comments */
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+    .intro-container {
+        margin: 15px auto;
+        padding: 10px 15px;
+    }
+    h1 {
+        font-size: 1.9em;
+    }
+    h2 {
+        font-size: 1.4em;
+    }
+    .play-button {
+        width: 70px;
+        height: 70px;
+    }
+    .play-button i.fa-play {
+        font-size: 30px;
+    }
+    .info-section {
+        font-size: 0.9em;
+    }
+}
+
+/* Media query for 480px already adjusted above for .info-section */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+    .intro-container {
+        margin: 10px auto;
+        padding: 10px 10px;
+        border-radius: 4px;
+    }
+    h1 {
+        font-size: 1.6em;
+        padding-bottom: 6px;
+        margin-bottom: 15px;
+    }
+    h2 {
+        font-size: 1.3em;
+        margin-top: 25px;
+    }
+    .simulator-preview {
+        margin: 15px auto;
+    }
+    .play-button {
+        width: 60px;
+        height: 60px;
+    }
+    .play-button i.fa-play {
+        font-size: 24px;
+    }
+    .info-section {
+        font-size: 0.85em;
+        padding: 10px 0;
+        margin: 20px 0;
+    }
+    .description {
+        padding: 0 5px;
+    }
+    .comments-section {
+        margin-top: 30px;
+        padding-top: 15px;
+    }
+    .comments-section h2 {
+        margin-bottom: 20px;
+    }
+}
+
+
+/* --- END OF FILE intro_style.css --- */

@@ -1,0 +1,660 @@
+/* START OF FILE style.css */
+
+/* Global Reset and Box Sizing */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* CSS Variables for the Color Scheme */
+:root {
+  /* Background shades (grays) */
+  --bg-body:         #2b2b2b;  /* Body overall background (dark gray) */
+  --bg-container:    #3a3a3a;  /* Main container background */
+  --bg-panel:        #444444;  /* Controls and visualization panels */
+  --bg-table:        #555555;  /* Table header backgrounds */
+  --bg-input:        #666666;  /* Input field backgrounds */
+  --bg-button:       #555555;  /* Button background */
+
+  /* Border color */
+  --border:          #666666;
+
+  /* Primary text */
+  --text-primary:    #ffffff;  /* White for main foreground text */
+  --text-secondary:  #cccccc;
+
+  /* Accent (foreground) colors */
+  --accent-red:      #ff4136;
+  --accent-yellow:   #ffdc00;
+  --accent-green:    #2ecc40;
+  --accent-blue:     #0074d9;
+}
+
+/* Body styling */
+body {
+  font-family: sans-serif;
+  line-height: 1.4;
+  margin: 15px;
+  font-size: 14px;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+}
+
+/* Main Container */
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  background-color: var(--bg-container);
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Controls Panel */
+.controls {
+  flex: 1 1 700px;
+  min-width: 650px;
+  background-color: var(--bg-panel);
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+/* Visualization Panel */
+.visualization {
+  flex: 1 1 450px;
+  min-width: 400px;
+  background-color: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+/* --- START: Added Theme Toggle Styling --- */
+.theme-toggle-container {
+    margin-bottom: 10px; /* Space below button, above canvas */
+    text-align: right;   /* Position button to the right */
+}
+
+#theme-toggle-btn {
+    padding: 4px 8px;   /* Slightly smaller padding */
+    font-size: 0.9em;   /* Slightly smaller font */
+    vertical-align: middle; /* Align if needed */
+}
+
+#theme-toggle-btn i {
+    margin-right: 5px; /* Space between icon and text */
+    font-size: 1.1em;   /* Adjust icon size if needed */
+    vertical-align: middle;
+}
+/* --- END: Added Theme Toggle Styling --- */
+
+
+/* Canvas Container */
+#canvas-container {
+  position: relative; /* Needed for absolute positioning of children */
+  border: 1px solid var(--border);
+  margin-bottom: 10px; /* Space between canvas and controls */
+  height: 400px;
+  width: 100%;
+  /* Removed background color here, scene bg is now controlled by JS */
+  /* background-color: var(--bg-container); */
+  overflow: hidden; /* Prevents labels going outside container if needed */
+}
+
+#visualizationCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Canvas is positioned relatively by default */
+
+  /* === ADDED CSS FOR TOUCH === */
+  touch-action: none; /* Prevent default browser touch actions like scroll/zoom on the canvas */
+}
+
+
+/* === ADDED CSS === */
+/* Controls below the canvas */
+.visualization-controls {
+  margin-bottom: 15px; /* Space below the controls */
+  display: flex;
+  align-items: center; /* Align items vertically */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 5px 10px; /* Spacing between items */
+}
+
+.visualization-controls label {
+    cursor: pointer; /* Make labels clickable */
+    margin-right: 5px; /* Space after label */
+}
+.visualization-controls input[type="checkbox"] {
+    margin-right: 2px; /* Space between checkbox and label */
+    vertical-align: middle; /* Align checkbox with text */
+}
+.visualization-controls span {
+    vertical-align: middle; /* Align "Show:" text */
+}
+
+/* Move play/pause button styling if needed, or leave as is */
+#play-pause-btn {
+  min-width: 80px;
+  /* margin-top/bottom removed as .visualization-controls handles spacing */
+}
+/* CSS 2D Renderer Overlay Container */
+#css2d-renderer {
+  position: absolute; /* Overlay on top of the canvas */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* IMPORTANT: Prevent this layer from blocking mouse/touch events to the canvas */
+  pointer-events: none;
+  overflow: hidden; /* Hide labels that might go off-screen */
+}
+
+/* Style for the individual element labels */
+.element-label {
+  color: var(--text-primary);
+  background-color: rgba(43, 43, 43, 0.7); /* Semi-transparent dark background */
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: sans-serif;
+  /* === THE KEY CHANGE === */
+  /* Prevent the label DIV itself from capturing mouse/touch events */
+  pointer-events: none; /* Changed from 'auto' back to 'none' */
+  /* ====================== */
+  cursor: default; /* Cursor style doesn't matter much now */
+  white-space: nowrap; /* Prevent label text wrapping */
+  /* Position adjustments might be needed based on font/padding */
+   transform: translateX(-50%); /* Helps center the label above the anchor point */
+   margin-top: -1.5em; /* Adjust vertical offset */
+
+}
+
+/* Headings */
+h1, h2, h3 {
+  margin-bottom: 10px;
+  padding-top: 10px;
+  color: var(--text-primary);
+}
+/* Modified H1 styles specifically for the info block */
+h1 {
+  padding-top: 0; /* Override previous padding-top */
+  border-bottom: 1px solid var(--border); /* Use existing border */
+  padding-bottom: 3px;
+  margin: 0 15px 10px 15px; /* Match gaussianbeam spacing */
+  font-size: 1.7em;
+  /* H1 INFO MOVE - Flexbox for layout */
+  display: flex;
+  justify-content: space-between;
+  /* H1 INFO LAYOUT - Align items top */
+  align-items: flex-start;
+  flex-wrap: wrap; /* Allow info to wrap on smaller screens */
+  gap: 10px; /* Add gap between title and info */
+   /* Remove or adjust background if it clashes with dark theme */
+   /* background-color: #eaeff4; */
+   padding: 8px 15px;
+   border-radius: 4px;
+}
+
+/* Main Elements Table Styling */
+#elements-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  table-layout: fixed;
+}
+
+#elements-table th,
+#elements-table td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 0.9em;
+  vertical-align: middle;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Table Header (using gray for background and white text) */
+#elements-table th {
+  background-color: var(--bg-table);
+  color: var(--text-primary);
+  white-space: normal;
+}
+
+/* Define Column Widths (7 columns) */
+#elements-table th:nth-child(1) { width: 18%; } /* Type */
+#elements-table th:nth-child(2) { width: 10%; text-align: center; } /* Position */
+#elements-table th:nth-child(3) { width: 28%; } /* Properties */
+#elements-table th:nth-child(4) { width: 12%; text-align: center; } /* Ellipse */
+#elements-table th:nth-child(5) { width: 18%; } /* Output Vector */
+#elements-table th:nth-child(6) { width: 9%; text-align: right; } /* Intensity */
+#elements-table th:nth-child(7) { width: 5%; text-align: center; } /* Actions */
+
+/* Align specific data columns */
+#elements-table td:nth-child(2) { text-align: center; } /* Position */
+#elements-table td:nth-child(4) { text-align: center; } /* Ellipse */
+#elements-table td:nth-child(6) { text-align: right; } /* Intensity */
+#elements-table td:nth-child(7) { text-align: center; } /* Actions */
+#elements-table td:nth-child(3) { vertical-align: top; } /* Properties */
+#elements-table td:nth-child(5) {
+  font-family: monospace;
+  font-size: 0.85em;
+  white-space: normal;
+}
+
+/* Input Fields within the Table */
+td input[type="number"],
+td input[type="text"] {
+width: 95%;
+max-width: 60px; /* You might need to adjust this slightly if spinners cause overflow */
+padding: 3px;
+font-size: 0.95em;
+border: 1px solid var(--border);
+background-color: var(--bg-input);
+color: var(--text-primary);
+border-radius: 3px;
+/* -moz-appearance: textfield; */ /* <<< REMOVE or COMMENT OUT this line */
+/* appearance: textfield; */    /* <<< REMOVE or COMMENT OUT this line */
+}
+
+
+/* Disabled/Read-Only Input Fields (Shaded) */
+td input[disabled],
+td input[readonly] {
+color: var(--border);
+border: 1px solid var(--border);
+/* Optionally, remove pointer events */
+pointer-events: none;
+}
+/* Styling for Properties Cell Content */
+.properties-cell .property-item,
+.initial-properties-cell > div {
+  display: block;
+  margin-bottom: 4px;
+}
+.properties-cell,
+.initial-properties-cell {
+  white-space: normal;
+}
+.properties-cell .property-item span {
+  display: inline-block;
+  font-size: 0.9em;
+}
+.properties-cell .property-item span.unit-label {
+  margin-left: 2px;
+  color: var(--accent-blue);
+}
+.properties-cell .property-item input[type="number"] {
+  margin-left: 4px;
+}
+
+/* Initial Polarization Properties */
+.initial-properties-cell label {
+  display: block;
+  font-size: 0.9em;
+  font-weight: bold;
+  margin-bottom: 3px;
+  color: var(--accent-green);
+}
+.initial-properties-cell select {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  font-size: 0.95em;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+.initial-properties-cell input[type="text"] {
+  width: 45px;
+  margin: 0 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+.initial-properties-cell button {
+  padding: 2px 6px;
+  margin-left: 5px;
+  font-size: 0.9em;
+  vertical-align: middle;
+  color: var(--text-primary);
+  background-color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+.initial-properties-cell button:hover {
+  background-color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+.initial-properties-cell .custom-inputs {
+  font-size: 0.9em;
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.initial-properties-cell .custom-inputs span {
+  display: inline-block;
+  min-width: 20px;
+}
+
+/* Styling for Ellipse Cell Content */
+.ellipse-cell svg {
+  display: block;
+  margin: 0 auto 3px auto;
+  width: 50px;
+  height: 50px;
+  overflow: visible;
+}
+.psi-chi-text {
+  display: block;
+  font-size: 0.8em;
+  color: var(--accent-yellow);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* General Controls and Button Styling */
+button {
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.95em;
+  border: 1px solid var(--border);
+  background-color: var(--bg-button);
+  color: var(--text-primary);
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+button:hover {
+  background-color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+select {
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+
+/* Specific Controls for Adding Elements */
+#add-element,
+#add-element-btn {
+  margin-left: 0;
+}
+#add-element {
+  margin-right: 5px;
+}
+
+/* Remove Button Styling (uses red accent) */
+.remove-btn {
+  color: var(--accent-red);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1em;
+  padding: 0 5px;
+}
+.remove-btn:hover {
+  background-color: transparent;
+}
+
+/* Play-Pause Button and Plot Controls */
+/* Play-Pause button style is now handled by .visualization-controls gap/alignment */
+#play-pause-btn {
+  /* align-self: center; */ /* Not needed if in flex row */
+  /* margin-top: 5px; */ /* Spacing handled by flex gap */
+  /* margin-bottom: 15px; */ /* Spacing handled by flex gap */
+  min-width: 80px;
+}
+#intensityPlot {
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+.plot-controls {
+  margin-bottom: 5px;
+}
+/* Add to style.css */
+
+/* Styling for the mirror checkbox */
+.properties-cell input[type="checkbox"] {
+vertical-align: middle;
+margin-right: 4px;
+}
+.properties-cell label { /* Style label associated with checkbox */
+ display: inline; /* Keep label on same line */
+ font-weight: normal;
+ font-size: 0.95em;
+ vertical-align: middle;
+}
+
+/* Style reflected rows */
+.reflected-row {
+background-color: rgba(255, 165, 0, 0.1); /* Light orange background */
+font-style: italic;
+}
+
+.reflected-row td:nth-child(1) { /* Type column */
+  font-weight: bold;
+  color: #ffcc66; /* Lighter orange text */
+}
+
+.reflected-properties input,
+.reflected-properties button {
+  opacity: 0.7;
+  cursor: not-allowed !important; /* Indicate non-interactive */
+}
+
+.reflected-angle-info {
+  font-size: 0.85em;
+  color: #aaa;
+  margin-left: 5px;
+}
+.final-reflected-row {
+   border-top: 2px solid #ffcc66;
+   font-weight: bold;
+}
+
+/* Style rows with zero intensity (e.g., after mirror) */
+.zero-intensity-row {
+  /* Optional: slightly dimmer text or background */
+  color: #aaa;
+   /* background-color: rgba(80, 80, 80, 0.1); */
+}
+.zero-intensity-row input {
+  opacity: 0.6; /* Dim inputs as well */
+}
+
+/* Styling for the mirror checkbox */
+.properties-cell input[type="checkbox"] {
+vertical-align: middle;
+margin-right: 4px;
+}
+.properties-cell label { /* Style label associated with checkbox */
+ display: inline; /* Keep label on same line */
+ font-weight: normal;
+ font-size: 0.95em;
+ vertical-align: middle;
+}
+
+/* Style reflected rows */
+.reflected-row {
+background-color: rgba(255, 165, 0, 0.1); /* Light orange background */
+font-style: italic;
+}
+
+.reflected-row td:nth-child(1) { /* Type column */
+  font-weight: bold;
+  color: #ffcc66; /* Lighter orange text */
+}
+
+.reflected-properties input,
+.reflected-properties button {
+  opacity: 0.7;
+  cursor: not-allowed !important; /* Indicate non-interactive */
+}
+
+.reflected-angle-info {
+  font-size: 0.85em;
+  color: #aaa;
+  margin-left: 5px;
+}
+.final-reflected-row {
+   border-top: 2px solid #ffcc66;
+   font-weight: bold;
+}
+
+/* Style rows with zero intensity (e.g., after mirror) */
+.zero-intensity-row {
+  /* Optional: slightly dimmer text or background */
+  color: #aaa;
+   /* background-color: rgba(80, 80, 80, 0.1); */
+}
+.zero-intensity-row input {
+  opacity: 0.6; /* Dim inputs as well */
+}
+
+/* --- START OF ADDED STYLES FOR H1 INFO BLOCK --- */
+/* Copied/adapted from gaussianbeam.html's style.css */
+
+/* (H1 styles are modified above, near the original H1 definition) */
+
+/* Define span for the title part */
+.h1-title {
+  /* Allow title to shrink if needed */
+  flex-grow: 1;
+  margin-right: 10px; /* Add some space before info block */
+}
+
+
+/* H1 INFO MOVE - Style the container for the info */
+/* H1 INFO LAYOUT - Arrange info items horizontally */
+.h1-info {
+  display: flex; /* Arrange items horizontally */
+  gap: 20px; /* Space between info items */
+  font-size: 0.6em; /* Relative to h1 font size */
+  line-height: 1.3;
+  text-align: center; /* Center text within items */
+  color: var(--text-secondary); /* Use existing color variable */
+  margin-left: auto; /* Push to the right */
+  flex-shrink: 0; /* Prevent shrinking */
+  align-items: flex-start; /* Align items to the top */
+}
+
+/* H1 INFO LAYOUT - Style for each info block */
+.info-item {
+  display: flex;
+  flex-direction: column; /* Stack label above content */
+  align-items: center; /* Center label and content */
+  min-width: 80px; /* Give items some minimum width */
+}
+
+/* H1 INFO LAYOUT - Style for the labels */
+.info-label {
+  font-size: 0.8em; /* Smaller font for label */
+  font-weight: bold;
+  color: var(--text-secondary); /* Use existing color */
+  margin-bottom: 3px;
+  white-space: nowrap; /* Prevent label wrapping */
+  text-transform: uppercase; /* Optional: Make labels uppercase */
+  letter-spacing: 0.5px; /* Optional: Add letter spacing */
+}
+
+/* H1 INFO LAYOUT - Style for the content below label */
+.info-content {
+  font-size: 0.95em; /* Adjust content font size if needed */
+}
+
+/* H1 INFO LAYOUT - Style the links within the info block */
+.h1-info a {
+  color: var(--accent-blue); /* Use existing color variable */
+  text-decoration: none;
+  display: inline-block; /* Needed for icon centering */
+  vertical-align: middle; /* Added for better icon alignment */
+}
+.h1-info a:hover {
+  text-decoration: underline;
+  filter: brightness(1.2); /* Brighten on hover for dark theme */
+}
+
+/* H1 INFO LAYOUT - General style for icons within info links */
+.h1-info a i {
+  font-size: 1.8em; /* Default size */
+  line-height: 1;
+  color: var(--text-primary); /* Use primary text color for icons */
+  vertical-align: middle; /* Helps alignment */
+  transition: filter 0.2s ease, color 0.2s ease; /* Smooth hover effect */
+}
+.h1-info a:hover i {
+  color: var(--accent-blue); /* Icon color on hover */
+  filter: brightness(1.1); /* Slightly brighten icon on hover too */
+}
+
+/* GitHub icon styling (if different needed) */
+.h1-info a .fab.fa-github {
+   color: #e0e0e0; /* Lighter gray for GitHub icon on dark bg */
+}
+.h1-info a:hover .fab.fa-github {
+  color: var(--accent-blue);
+}
+.h1-info a:hover .fa-solid.fa-file-invoice {
+   color: var(--accent-blue);
+}
+
+/* Media Queries for H1 Info Block */
+@media (max-width: 768px) {
+  h1 { font-size: 1.5em; } /* Adjust h1 size */
+  .h1-info {
+      font-size: 0.65em;
+      margin-left: 0; /* Reset margin */
+      flex-basis: 100%; /* Take full width when wrapped */
+      margin-top: 8px; /* Add space when wrapped */
+      justify-content: space-around; /* Spread items out a bit */
+      gap: 10px;
+  }
+   .info-item { min-width: 60px; }
+}
+@media (max-width: 480px) {
+   h1 { font-size: 1.4em; } /* Adjust h1 size */
+  .h1-info {
+      font-size: 0.7em;
+      flex-direction: column; /* Stack items vertically */
+      align-items: flex-start; /* Align stacked items left */
+      gap: 5px; /* Reduce gap for vertical stack */
+      text-align: left; /* Align text left */
+      width: 100%; /* Ensure it takes width */
+  }
+  .info-item {
+     flex-direction: row; /* Put label and content side-by-side */
+     align-items: baseline; /* Align baseline */
+     gap: 6px; /* Gap between label and content */
+     min-width: 0; /* Remove min-width */
+     width: 100%; /* Take full width */
+  }
+  .info-label {
+      margin-bottom: 0; /* Remove bottom margin */
+      text-align: left;
+      flex-shrink: 0; /* Prevent label shrinking */
+      min-width: 80px; /* Give label fixed width */
+      text-transform: none; /* Optional: remove uppercase */
+      letter-spacing: 0; /* Optional: remove spacing */
+  }
+   .info-content { text-align: left; }
+   .h1-info a i { font-size: 1.5em; } /* Slightly smaller icon */
+
+}
+/* --- END OF ADDED STYLES FOR H1 INFO BLOCK --- */
+
+
+/* END OF FILE style.css */

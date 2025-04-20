@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jones Calculus Polarization Simulation</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/physicify-simulab/homepage/refs/heads/main/favicon.png">
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    <!-- Link to the updated external style sheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Header & Footer Styles -->
+  <link rel="stylesheet" href="https://physicify-simulab.github.io/homepage/header.css">
+  <link rel="stylesheet" href="https://physicify-simulab.github.io/homepage/footer.css">
+
+    <!-- Library Includes -->
+    <script src="complex.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    <!-- REMOVED THE INLINE <style> BLOCK -->
+</head>
+<body>
+    <!-- Dynamic Header Include -->
+    <div id="header-placeholder"></div>
+
+    <!-- H1 Tag remains the same with the added structure -->
+    <h1>
+      <span class="h1-title">Jones Calculus Polarization Simulation</span>
+      <div class="h1-info">
+        <div class="info-item">
+          <span class="info-label">About and discussion</span>
+          <div class="info-content">
+            <a href="https://physicify-simulab.github.io/Polarization/" target="_blank" title="About and Discussion">
+               <i class="fa-solid fa-file-invoice"></i>
+            </a>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Source</span>
+          <div class="info-content">
+            <a href="https://github.com/physicify-simulab/Polarization" target="_blank" title="View Source on GitHub">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Original Author</span>
+          <div class="info-content">
+            <a href="https://github.com/Hussein-Tofaili" target="_blank">Hussein-Tofaili</a>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Other Contributors</span>
+          <div class="info-content">
+            <a href="" target="_blank">none</a>
+          </div>
+        </div>
+      </div>
+    </h1>
+
+    <div class="container">
+        <div class="controls">
+             <h2>Controls</h2>
+            <div style="margin-top: 10px;">
+                <label for="add-element">Add Element:</label>
+                <select id="add-element">
+                    <option value="Linear Polarizer">Linear Polarizer (Angle θ)</option>
+                    <option value="Mirror">Mirror</option>
+                    <option value="HWP">Half-Wave Plate (HWP)</option>
+                    <option value="QWP">Quarter-Wave Plate (QWP)</option>
+                    <option value="General Waveplate">General Waveplate (Linear Retarder)</option>
+                    <option value="Arbitrary Birefringent">Arbitrary Birefringent (Elliptical Retarder)</option>
+                    <option value="Faraday Rotator">Faraday Rotator (Angle θ_rot)</option>
+                </select>
+                <button id="add-element-btn">Add</button>
+            </div>
+            <h3>Optical Path</h3>
+            <table id="elements-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Position (z)</th>
+                        <th>Properties</th>
+                        <th>Ellipse</th>
+                        <th>Output Vector [Ex, Ey]</th>
+                        <th>Intensity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table rows will be added here -->
+                </tbody>
+            </table>
+            <p>Note: Angles/Retardation in degrees.</p>
+        </div>
+
+        <div class="visualization">
+            <h2>3D Visualization & Intensity</h2>
+
+            <!-- START: Added Theme Toggle Button -->
+            <div class="theme-toggle-container">
+                 <button id="theme-toggle-btn" title="Toggle Canvas Theme (Light/Dark)">
+                     <i class="fa-solid fa-circle-half-stroke"></i> Theme
+                 </button>
+            </div>
+            <!-- END: Added Theme Toggle Button -->
+
+            <div id="canvas-container">
+                <canvas id="visualizationCanvas"></canvas>
+                <div id="css2d-renderer"></div>
+            </div>
+             <div class="visualization-controls">
+                 <button id="play-pause-btn">Play</button>
+                 <span style="margin-left: 15px;">Show:</span>
+                 <input type="checkbox" id="show-labels-checkbox">
+                 <label for="show-labels-checkbox">Labels</label>
+                 <input type="checkbox" id="show-efield-checkbox" checked>
+                 <label for="show-efield-checkbox">E-Field</label>
+                 <input type="checkbox" id="show-envelope-checkbox" checked>
+                 <label for="show-envelope-checkbox">Envelope</label>
+            </div>
+            <div class="plot-controls" style="margin-top: 15px;">
+                 <input type="checkbox" id="show-elements-checkbox" checked>
+                 <label for="show-elements-checkbox">Show Element Positions on Plot</label>
+            </div>
+             <div id="intensityPlot" style="width:100%;height:250px;"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="interactiveCanvas.js"></script> <!-- Assuming this exists for polarization? If not, remove. -->
+
+     <!-- Dynamic Footer Include -->
+     <div id="footer-placeholder"></div>
+
+     <!-- Script to include Header/Footer -->
+    <script>
+        function includeHTML(elementId, filePath) {
+          fetch(filePath)
+            .then(response => {
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                return response.text();
+            })
+            .then(data => {
+              const element = document.getElementById(elementId);
+              if (element) { element.innerHTML = data; }
+              else { console.error(`Element with ID '${elementId}' not found.`); }
+            })
+            .catch(error => console.error('Error loading ' + filePath + ':', error));
+        }
+        includeHTML('header-placeholder', 'https://physicify-simulab.github.io/homepage/header.html');
+        includeHTML('footer-placeholder', 'https://physicify-simulab.github.io/homepage/footer.html');
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polarization 3D Simulator - Introduction</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/physicify-simulab/homepage/refs/heads/main/favicon.png">
+
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+
+    <!-- Intro Page Styles -->
+    <link rel="stylesheet" href="intro_style.css">
+
+    <!-- Shared Header & Footer Styles -->
+    <link rel="stylesheet" href="https://physicify-simulab.github.io/homepage/header.css">
+    <link rel="stylesheet" href="https://physicify-simulab.github.io/homepage/footer.css">
+</head>
+<body>
+
+    <!-- Dynamic Header Include -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Introduction Content -->
+    <main class="intro-container">
+
+        <h1>Welcome to the Polarization 3D Simulator</h1>
+
+        <!-- Simulator Preview with Play Button -->
+        <div class="simulator-preview">
+            <img src="https://raw.githubusercontent.com/physicify-simulab/Polarization/refs/heads/main/Screenshot.png" alt="Screenshot of the Plarization 3D Simulator">
+            <a href="https://physicify-simulab.github.io/Polarization/polarization.html" class="play-link" title="Launch Simulator">
+                <div class="play-button">
+                    <i class="fas fa-play"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Information Section (Modified) -->
+        <section class="info-section">
+            <p>
+                <span class="author-info">
+                    Original Author: <a href="https://github.com/Hussein-Tofaili" target="_blank">Hussein-Tofaili</a>
+                </span>
+                <span class="info-separator">|</span>
+                <span class="source-info">
+                    Source Code: <a href="https://github.com/physicify-simulab/Polarization" target="_blank">
+                        <i class="fab fa-github"></i> GitHub Repository
+                    </a>
+                </span>
+            </p>
+            <!-- Removed the "About & Discussion" paragraph -->
+        </section>
+
+        <!-- Description Section -->
+        <section class="description">
+            <h2>About This Simulator</h2>
+            <p>
+                This interactive tool uses Jones Calculus to simulate light polarization. Build an optical path with elements like polarizers, waveplates, and mirrors. Adjust parameters and visualize the results in real-time through a data table, an intensity plot, and an interactive 3D view where you can drag and rotate elements. Ideal for learning about polarization phenomena.</p>
+            <p>
+                Please note: This simulator is currently in beta. We appreciate your feedback! If you encounter any issues or have suggestions for improvement, please report them on our <a href="https://github.com/physicify-simulab/Polarization/issues" target="_blank" rel="noopener noreferrer">GitHub Issues page</a>.
+            </p>
+             <p>
+                Click the play button above to launch the simulator!
+             </p>
+        </section>
+
+        <!-- Comments Section -->
+        <section class="comments-section">
+            <h2>Comments & Feedback</h2>
+            <script src="https://giscus.app/client.js"
+        data-repo="physicify-simulab/Polarization"
+        data-repo-id="R_kgDOOcwQPg"
+        data-category="Comments"
+        data-category-id="DIC_kwDOOcwQPs4CpSXS"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+            <noscript>Please enable JavaScript to view the comments powered by Giscus.</noscript>
+        </section>
+
+    </main>
+
+    <!-- Dynamic Footer Include -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Script for Header/Footer Includes -->
+    <script>
+        // Simple function to fetch and insert external HTML snippets
+        function includeHTML(elementId, filePath) {
+          fetch(filePath)
+            .then(response => response.text())
+            .then(data => {
+              document.getElementById(elementId).innerHTML = data;
+            })
+            .catch(error => console.error('Error loading ' + filePath, error));
+        }
+        includeHTML('header-placeholder', 'https://physicify-simulab.github.io/homepage/header.html');
+        includeHTML('footer-placeholder', 'https://physicify-simulab.github.io/homepage/footer.html');
+      </script>
+</body>
+</html>
