@@ -35,7 +35,7 @@
 body {
   font-family: sans-serif;
   line-height: 1.4;
-  margin: 15px;
+  margin: 15px; /* Updated margin */
   font-size: 14px;
   background-color: var(--bg-body);
   color: var(--text-primary);
@@ -50,6 +50,8 @@ body {
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 8px;
+  max-width: 1800px; /* Consistent max width like gaussianbeam */
+  margin: 0 auto 20px auto; /* Centering and bottom margin */
 }
 
 /* Controls Panel */
@@ -179,28 +181,64 @@ body {
 /* Headings */
 h1, h2, h3 {
   margin-bottom: 10px;
-  padding-top: 10px;
+  /* Removed padding-top from general h2, h3 */
   color: var(--text-primary);
 }
-/* Modified H1 styles specifically for the info block */
+h2, h3 {
+    padding-left: 5px; /* Slight indent for section headers */
+}
+
+/* Modified H1 styles specifically for the info block and copyright move */
 h1 {
-  padding-top: 0; /* Override previous padding-top */
-  border-bottom: 1px solid var(--border); /* Use existing border */
+  /* padding-top: 0; */ /* Handled by padding below */
+  border-bottom: 1px solid var(--border);
   padding-bottom: 3px;
-  margin: 0 15px 10px 15px; /* Match gaussianbeam spacing */
+  margin: 0 15px 10px 15px; /* Consistent with gaussianbeam spacing */
   font-size: 1.7em;
-  /* H1 INFO MOVE - Flexbox for layout */
+  /* Flexbox for layout */
   display: flex;
   justify-content: space-between;
-  /* H1 INFO LAYOUT - Align items top */
+  /* Align items top */
   align-items: flex-start;
-  flex-wrap: wrap; /* Allow info to wrap on smaller screens */
-  gap: 10px; /* Add gap between title and info */
-   /* Remove or adjust background if it clashes with dark theme */
-   /* background-color: #eaeff4; */
+  flex-wrap: wrap; /* Allow info to wrap */
+  gap: 10px; /* Gap between title/copyright group and info */
+   /* Use panel background for consistency */
+  background-color: var(--bg-panel);
    padding: 8px 15px;
    border-radius: 4px;
 }
+
+/* COPYRIGHT MOVE - Wrapper for title and copyright */
+.h1-title-group {
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Define span for the title part */
+.h1-title {
+  /* Allow title to shrink if needed */
+  flex-grow: 1;
+  margin-right: 10px; /* Add some space before info block */
+  display: block; /* Ensure it takes its own line if needed */
+}
+
+/* COPYRIGHT MOVE - Style for copyright below title */
+.h1-copyright {
+    font-size: 0.8rem; /* Smaller font size */
+    color: var(--text-secondary); /* Use secondary text color */
+    margin-top: 2px;   /* Small space below title */
+    line-height: 1.2;
+    font-weight: normal; /* Ensure it's not bold */
+}
+.h1-copyright a {
+    color: inherit; /* Inherit the secondary color */
+    text-decoration: none;
+}
+.h1-copyright a:hover {
+    text-decoration: underline;
+    color: var(--accent-blue); /* Use accent color on hover */
+    filter: brightness(1.1); /* Slightly brighten link on hover */
+}
+
 
 /* Main Elements Table Styling */
 #elements-table {
@@ -221,7 +259,7 @@ h1 {
   overflow-wrap: break-word;
 }
 
-/* Table Header (using gray for background and white text) */
+/* Table Header (using theme variable) */
 #elements-table th {
   background-color: var(--bg-table);
   color: var(--text-primary);
@@ -260,8 +298,9 @@ border: 1px solid var(--border);
 background-color: var(--bg-input);
 color: var(--text-primary);
 border-radius: 3px;
-/* -moz-appearance: textfield; */ /* <<< REMOVE or COMMENT OUT this line */
-/* appearance: textfield; */    /* <<< REMOVE or COMMENT OUT this line */
+/* Spinners are default, removal lines commented out */
+/* -moz-appearance: textfield; */
+/* appearance: textfield; */
 }
 
 
@@ -476,67 +515,11 @@ font-style: italic;
   opacity: 0.6; /* Dim inputs as well */
 }
 
-/* Styling for the mirror checkbox */
-.properties-cell input[type="checkbox"] {
-vertical-align: middle;
-margin-right: 4px;
-}
-.properties-cell label { /* Style label associated with checkbox */
- display: inline; /* Keep label on same line */
- font-weight: normal;
- font-size: 0.95em;
- vertical-align: middle;
-}
-
-/* Style reflected rows */
-.reflected-row {
-background-color: rgba(255, 165, 0, 0.1); /* Light orange background */
-font-style: italic;
-}
-
-.reflected-row td:nth-child(1) { /* Type column */
-  font-weight: bold;
-  color: #ffcc66; /* Lighter orange text */
-}
-
-.reflected-properties input,
-.reflected-properties button {
-  opacity: 0.7;
-  cursor: not-allowed !important; /* Indicate non-interactive */
-}
-
-.reflected-angle-info {
-  font-size: 0.85em;
-  color: #aaa;
-  margin-left: 5px;
-}
-.final-reflected-row {
-   border-top: 2px solid #ffcc66;
-   font-weight: bold;
-}
-
-/* Style rows with zero intensity (e.g., after mirror) */
-.zero-intensity-row {
-  /* Optional: slightly dimmer text or background */
-  color: #aaa;
-   /* background-color: rgba(80, 80, 80, 0.1); */
-}
-.zero-intensity-row input {
-  opacity: 0.6; /* Dim inputs as well */
-}
 
 /* --- START OF ADDED STYLES FOR H1 INFO BLOCK --- */
-/* Copied/adapted from gaussianbeam.html's style.css */
+/* Copied/adapted from gaussianbeam.html's style.css and adjusted for dark theme */
 
 /* (H1 styles are modified above, near the original H1 definition) */
-
-/* Define span for the title part */
-.h1-title {
-  /* Allow title to shrink if needed */
-  flex-grow: 1;
-  margin-right: 10px; /* Add some space before info block */
-}
-
 
 /* H1 INFO MOVE - Style the container for the info */
 /* H1 INFO LAYOUT - Arrange info items horizontally */
@@ -575,6 +558,7 @@ font-style: italic;
 .info-content {
   font-size: 0.95em; /* Adjust content font size if needed */
 }
+/* REMOVED .info-item-copyright styling as it's no longer in .h1-info */
 
 /* H1 INFO LAYOUT - Style the links within the info block */
 .h1-info a {
@@ -612,9 +596,47 @@ font-style: italic;
    color: var(--accent-blue);
 }
 
-/* Media Queries for H1 Info Block */
+/* --- Media Queries --- */
+
+/* Adapt layout for medium screens */
+@media (max-width: 1200px) {
+    .controls {
+        min-width: 550px; /* Allow controls panel to shrink a bit */
+    }
+    .visualization {
+        min-width: 350px; /* Allow visualization panel to shrink a bit */
+    }
+}
+
+/* Adapt layout for smaller screens (tablet portrait) */
+@media (max-width: 992px) {
+     .container {
+        flex-direction: column; /* Stack controls and visualization */
+        padding: 15px;
+    }
+    .controls, .visualization {
+        flex-basis: auto; /* Allow them to take full width */
+        min-width: 0; /* Remove min-width constraint */
+        width: 100%;
+    }
+}
+
+
+/* Media Queries for H1 Info Block (and overall compaction) */
 @media (max-width: 768px) {
-  h1 { font-size: 1.5em; } /* Adjust h1 size */
+  body {
+      font-size: 13px;
+      margin: 10px; /* Reduce body margin */
+  }
+  .container { padding: 10px; }
+  .controls, .visualization { padding: 10px; }
+  h1 {
+      font-size: 1.5em; /* Adjust h1 size */
+      margin: 0 10px 8px 10px; /* Adjust h1 margin */
+      padding: 6px 10px; /* Adjust h1 padding */
+  }
+  h2, h3 { margin-bottom: 8px; }
+
   .h1-info {
       font-size: 0.65em;
       margin-left: 0; /* Reset margin */
@@ -624,9 +646,35 @@ font-style: italic;
       gap: 10px;
   }
    .info-item { min-width: 60px; }
+
+   #elements-table th, #elements-table td {
+       padding: 4px 6px; /* Reduce table padding */
+       font-size: 0.85em; /* Reduce table font */
+   }
+   td input[type="number"], td input[type="text"] {
+       font-size: 0.9em;
+   }
+   #canvas-container { height: 350px; } /* Reduce canvas height */
 }
+
 @media (max-width: 480px) {
-   h1 { font-size: 1.4em; } /* Adjust h1 size */
+   body {
+       font-size: 12px;
+       margin: 5px; /* Further reduce body margin */
+   }
+   .container { padding: 8px; }
+   .controls, .visualization { padding: 8px; }
+   h1 {
+       font-size: 1.4em; /* Adjust h1 size */
+       margin: 0 8px 6px 8px;
+       padding: 5px 8px;
+       gap: 5px; /* Adjust gap for wrapping */
+   }
+   /* COPYRIGHT MOVE: Let title group take width when wrapping */
+   .h1-title-group {
+       flex-basis: 100%; /* Allow title/copyright group to wrap */
+   }
+
   .h1-info {
       font-size: 0.7em;
       flex-direction: column; /* Stack items vertically */
@@ -634,6 +682,7 @@ font-style: italic;
       gap: 5px; /* Reduce gap for vertical stack */
       text-align: left; /* Align text left */
       width: 100%; /* Ensure it takes width */
+      margin-top: 0; /* Reduce space when info block wraps */
   }
   .info-item {
      flex-direction: row; /* Put label and content side-by-side */
@@ -653,6 +702,15 @@ font-style: italic;
    .info-content { text-align: left; }
    .h1-info a i { font-size: 1.5em; } /* Slightly smaller icon */
 
+   #elements-table th, #elements-table td {
+       padding: 3px 4px; /* Further reduce table padding */
+       font-size: 0.8em; /* Further reduce table font */
+   }
+   td input[type="number"], td input[type="text"] {
+       max-width: 50px; /* Reduce input max width */
+   }
+   .ellipse-cell svg { width: 40px; height: 40px; } /* Smaller ellipse */
+   #canvas-container { height: 300px; } /* Reduce canvas height */
 }
 /* --- END OF ADDED STYLES FOR H1 INFO BLOCK --- */
 
