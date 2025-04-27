@@ -1,5 +1,3 @@
-
-
 // script.js (Complete - Includes Double-Pass Mirror Logic & Direct Waveplate Formulas)
 
 // --- Global State ---
@@ -33,6 +31,11 @@ const addElementBtn = document.getElementById('add-element-btn');
 const playPauseBtn = document.getElementById('play-pause-btn');
 const intensityPlotDiv = document.getElementById('intensityPlot');
 const showElementsCheckbox = document.getElementById('show-elements-checkbox');
+// --- ADDED Export/Import Elements ---
+const exportBtn = document.getElementById('export-btn');
+const importBtn = document.getElementById('import-btn');
+const importFileInput = document.getElementById('import-file-input');
+// --- END Added Elements ---
 
 // --- Explicitly Expose Key State and Functions to Window ---
 window.opticalElements = opticalElements;
@@ -98,9 +101,6 @@ function normalizeVector(vector) {
     return [vector[0].div(mag), vector[1].div(mag)];
 }
 
-// getRotationMatrix is no longer strictly needed for waveplate calculation but kept for potential other uses
-// function getRotationMatrix(angleRad) { const c = Math.cos(angleRad); const s = Math.sin(angleRad); return [ [complex(c), complex(s)], [complex(-s), complex(c)] ]; }
-
 // --- Jones Matrix Calculation (Uses Direct Rotated Waveplate Formulas) ---
 function calculateJonesMatrix(element) {
     const physicalAngleRad = (element.angle || 0) * DEG_TO_RAD; // Angle theta
@@ -115,60 +115,40 @@ function calculateJonesMatrix(element) {
     try {
         switch (element.type) {
             case 'Linear Polarizer': {
-                // Linear Polarizer Jones matrix (axis along x-axis) rotated by physicalAngleRad
-                // Equivalent to R(-theta) * [[1, 0], [0, 0]] * R(theta)
                 return [ [complex(c2), complex(sc)], [complex(sc), complex(s2)] ];
             }
             case 'Mirror':
-                // Ideal mirror: [[1, 0], [0, -1]]. Doesn't rotate based on 'angle' parameter.
                  return [[complex(1), c0], [c0, complex(-1)]];
 
             case 'HWP': // Retardation eta = PI
             case 'QWP': // Retardation eta = PI/2
             case 'General Waveplate': {
-                // Direct formula for linear retarder (waveplate) with fast axis at angle 'physicalAngleRad' (theta)
-                // and retardation 'etaRad' (eta).
-                // M = [ cos²θ + e^(iη)sin²θ , (1 - e^(iη))cosθsinθ ]
-                //     [ (1 - e^(iη))cosθsinθ , sin²θ + e^(iη)cos²θ ]
                 let specificEtaRad;
                 if (element.type === 'HWP') specificEtaRad = PI;
                 else if (element.type === 'QWP') specificEtaRad = PI / 2;
-                else specificEtaRad = etaRad; // Use parameter for General Waveplate
+                else specificEtaRad = etaRad;
 
                 const expEta = complex(0, specificEtaRad).exp(); // e^(i*eta)
                 const oneMinusExpEta = c1.sub(expEta);         // (1 - e^(i*eta))
 
                 const m11 = complex(c2).add(expEta.mul(s2));
                 const m12 = oneMinusExpEta.mul(sc);
-                // m21 is the same as m12 for linear retarders
                 const m22 = complex(s2).add(expEta.mul(c2));
 
-                return [[m11, m12], [m12, m22]]; // Note: m21 = m12
+                return [[m11, m12], [m12, m22]];
             }
-            case 'Arbitrary Birefringent': { // Elliptical retarder
-                 // This formula (from Wikipedia page 4) already includes rotation based on physicalAngleRad (theta).
-                 // M = e^(iη/2) * [ cos(η/2)cos²θ + i sin(η/2)cos(2φ)sin²θ + ... ] - using a DIFFERENT parameterization
-                 // Let's stick to the parameterization used before:
-                 // Retardation eta (η), orientation theta (θ = physicalAngleRad), ellipticity delta (δ)
-                 // Formula seems to be based on: R(-θ) * [cos(η/2)+isin(η/2)cos(2δ) , isin(η/2)sin(2δ)] * R(θ)
-                 //                                         [ isin(η/2)sin(2δ), cos(η/2)-isin(η/2)cos(2δ)]
-                 // Let's re-implement the direct formula as it was previously, assuming it correctly encodes the intended behavior based on eta, delta, angle.
-                 // If this is wrong, the definition needs clarification.
-                 // The formula provided previously in the code:
+            case 'Arbitrary Birefringent': {
                  const expEta = complex(0, etaRad).exp();
                  const expDelta = complex(0, deltaRad).exp();
                  const expNegDelta = complex(0, -deltaRad).exp();
                  const oneMinusExpEta = c1.sub(expEta);
-                 const m11_arb = complex(c2).add(expEta.mul(s2)); // This part looks like a linear retarder
-                 const m12_arb = oneMinusExpEta.mul(expNegDelta).mul(sc); // This part introduces ellipticity via delta
-                 const m21_arb = oneMinusExpEta.mul(expDelta).mul(sc);    // Conjugate delta compared to m12
-                 const m22_arb = complex(s2).add(expEta.mul(c2)); // Symmetric part like linear retarder
-                 // WARNING: Verify this formula if precision is critical. It might not match all conventions.
-                 // For now, keeping the original implementation derived from the wiki formula.
+                 const m11_arb = complex(c2).add(expEta.mul(s2));
+                 const m12_arb = oneMinusExpEta.mul(expNegDelta).mul(sc);
+                 const m21_arb = oneMinusExpEta.mul(expDelta).mul(sc);
+                 const m22_arb = complex(s2).add(expEta.mul(c2));
                  return [[m11_arb, m12_arb], [m21_arb, m22_arb]];
              }
             case 'Faraday Rotator': {
-                // Rotation by theta_rot, independent of propagation direction and physical angle.
                 const cosTh = Math.cos(thetaRotRad); const sinTh = Math.sin(thetaRotRad);
                 return [ [complex(cosTh), complex(sinTh)], [complex(-sinTh), complex(cosTh)] ];
             }
@@ -183,17 +163,7 @@ function calculateJonesMatrix(element) {
 }
 
 // --- Calculate Backward Jones Matrix (for Reflected Path) ---
-/**
- * Calculates the Jones matrix for backward propagation in the reflected coordinate system.
- * For Reciprocal elements: M_bwd = C * M_fwd * C = [[m11, -m12], [-m21, m22]]
- * For Non-Reciprocal (Faraday Rotator): M_bwd = R(-theta_rot) = Transpose(M_fwd)
- * C = REFLECTION_COORD_TRANSFORM = [[1, 0], [0, -1]]
- * @param {Complex[][]} forwardMatrix The Jones matrix calculated for the forward pass (M_fwd).
- * @param {string} elementType The type of the optical element (e.g., 'HWP', 'Faraday Rotator').
- * @returns {Complex[][]} The Jones matrix appropriate for the backward pass in reflected coordinates (M_bwd).
- */
 function calculateBackwardJonesMatrix(forwardMatrix, elementType) {
-    // --- Basic Input Validation ---
     if (!Array.isArray(forwardMatrix) || forwardMatrix.length !== 2 ||
         !Array.isArray(forwardMatrix[0]) || forwardMatrix[0].length !== 2 ||
         !Array.isArray(forwardMatrix[1]) || forwardMatrix[1].length !== 2 ||
@@ -210,30 +180,14 @@ function calculateBackwardJonesMatrix(forwardMatrix, elementType) {
     let backwardMatrix;
 
     try {
-        // --- Handle Non-Reciprocal Elements (Faraday Rotator) ---
         if (elementType === 'Faraday Rotator') {
-            // M_bwd = Transpose(M_fwd) = R(-theta_rot)
-            // Transpose of [[a, b], [c, d]] is [[a, c], [b, d]]
-            backwardMatrix = [
-                [m11, m21], // New row 1: (old m11, old m21)
-                [m12, m22]  // New row 2: (old m12, old m22)
-            ];
-        }
-        // --- Handle Reciprocal Elements ---
-        else {
-            // Includes: Linear Polarizer, Mirror (though not used here),
-            // HWP, QWP, General Waveplate, Arbitrary Birefringent
-            // Formula: M_bwd = C * M_fwd * C = [[m11, -m12], [-m21, m22]]
+            backwardMatrix = [ [m11, m21], [m12, m22] ];
+        } else {
             const neg_m12 = m12.mul(-1);
             const neg_m21 = m21.mul(-1);
-
-            backwardMatrix = [
-                [m11, neg_m12],
-                [neg_m21, m22]
-            ];
+            backwardMatrix = [ [m11, neg_m12], [neg_m21, m22] ];
         }
 
-        // Final check for NaN after operations
         if (backwardMatrix.flat().some(c => !(c instanceof Complex) || isNaN(c.re))) {
             console.warn(`NaN generated during backward matrix calculation for type ${elementType}`, forwardMatrix, backwardMatrix);
             return [[complex(NaN), complex(NaN)], [complex(NaN), complex(NaN)]];
@@ -272,93 +226,71 @@ function recalculateSystem() {
         el.reflectedIntensity = undefined; el.isReflectedStage = false;
 
         if (doublePassMirrorFound) {
-            // Element is *after* the double-pass mirror in the forward path
             el.inputVector = [complex(0), complex(0)];
-            // Calculate forward matrix even if after mirror - needed for backward pass!
             el.jonesMatrix = calculateJonesMatrix(el);
             el.outputVector = [complex(0), complex(0)];
             el.intensity = 0;
         } else {
-            // Element is *before* or *at* the potential double-pass mirror
             el.inputVector = currentVector;
-            // Calculate and store the FORWARD Jones matrix
             el.jonesMatrix = calculateJonesMatrix(el);
 
             if (el.type === 'Mirror' && el.parameters?.isDoublePass) {
-                // Found the active mirror!
                 doublePassMirrorFound = true;
                 doublePassMirrorIndex = index;
-                vectorAtMirrorInput = el.inputVector; // Store vector *before* mirror matrix applied
-                // Forward "output" is zero after reflection
-                el.outputVector = [complex(0), complex(0)]; // Reflects, no forward transmission
+                vectorAtMirrorInput = el.inputVector;
+                el.outputVector = [complex(0), complex(0)];
                 el.intensity = 0;
                 currentVector = [complex(0), complex(0)];
             } else {
-                // Regular element or non-double-pass mirror
-                // Apply the calculated FORWARD matrix
                 el.outputVector = multiplyMatrixVector(el.jonesMatrix, currentVector);
                 el.intensity = vecMagSq(el.outputVector);
 
                 if (isNaN(el.outputVector[0].re) || isNaN(el.outputVector[1].re)) {
                     console.warn(`NaN detected in forward path output of element ${el.id} (${el.type})`);
-                    // Store NaN matrix to indicate error during forward pass? Or keep potentially valid matrix?
-                    // Let's assume the matrix calculation itself might be okay, but input vector was bad.
                     currentVector = [complex(NaN), complex(NaN)];
                 } else {
                     currentVector = el.outputVector;
                 }
             }
         }
-    }); // End of forward pass loop
+    });
 
     // --- 5. Backward Pass Calculation ---
     if (doublePassMirrorFound && vectorAtMirrorInput &&
         !isNaN(vectorAtMirrorInput[0]?.re) && !isNaN(vectorAtMirrorInput[1]?.re)) {
 
-        // 5a. Apply Coordinate Transformation for reflection
         let currentReflectedVector = multiplyMatrixVector(REFLECTION_COORD_TRANSFORM, vectorAtMirrorInput);
 
         if (isNaN(currentReflectedVector[0].re) || isNaN(currentReflectedVector[1].re)) {
             console.warn("NaN detected immediately after reflection transform. Skipping backward pass.");
-            for (let i = doublePassMirrorIndex - 1; i >= 0; i--) { /* Mark invalid */
+            for (let i = doublePassMirrorIndex - 1; i >= 0; i--) {
                  opticalElements[i].isReflectedStage = true; opticalElements[i].reflectedInputVector = [complex(NaN), complex(NaN)]; opticalElements[i].reflectedOutputVector = [complex(NaN), complex(NaN)]; opticalElements[i].reflectedIntensity = NaN;
             }
         } else {
-            // 5b. Iterate backwards through elements *before* the mirror
              for (let i = doublePassMirrorIndex - 1; i >= 0; i--) {
                  const el = opticalElements[i];
                  el.isReflectedStage = true;
                  el.reflectedInputVector = currentReflectedVector;
-
-                 // --- Calculate the appropriate Jones matrix for the backward pass ---
-                 // Retrieve the pre-calculated FORWARD matrix
                  const forwardMatrix = el.jonesMatrix;
-
-                 // Calculate the BACKWARD matrix using the new function
                  const reflectedJonesMatrix = calculateBackwardJonesMatrix(forwardMatrix, el.type);
-                 // Store it for potential debugging or advanced display?
                  el.reflectedJonesMatrix = reflectedJonesMatrix;
-                 // --------------------------------------------------------------------
-
-                 // Calculate the output vector after passing through this element (backward)
                  el.reflectedOutputVector = multiplyMatrixVector(reflectedJonesMatrix, currentReflectedVector);
                  el.reflectedIntensity = vecMagSq(el.reflectedOutputVector);
 
                  if (isNaN(el.reflectedOutputVector[0].re) || isNaN(el.reflectedOutputVector[1].re)) {
                      console.warn(`NaN detected in reflected path output of element ${el.id} (${el.type})`);
                      currentReflectedVector = [complex(NaN), complex(NaN)];
-                     for (let j = i - 1; j >= 0; j--) { /* Mark subsequent invalid */
+                     for (let j = i - 1; j >= 0; j--) {
                           opticalElements[j].isReflectedStage = true; opticalElements[j].reflectedInputVector = [complex(NaN), complex(NaN)]; opticalElements[j].reflectedOutputVector = [complex(NaN), complex(NaN)]; opticalElements[j].reflectedIntensity = NaN;
                      }
-                     break; // Exit backward loop
+                     break;
                  } else {
                      currentReflectedVector = el.reflectedOutputVector;
                  }
-             } // End of backward pass loop
+             }
         }
     } else if (doublePassMirrorFound && ( !vectorAtMirrorInput || isNaN(vectorAtMirrorInput[0]?.re) || isNaN(vectorAtMirrorInput[1]?.re))) {
         console.warn("Double pass mirror active, but input vector to mirror is invalid. Skipping reflection calculation.");
-         // Mark elements before mirror as having invalid reflected state (optional, but good practice)
          for (let i = doublePassMirrorIndex - 1; i >= 0; i--) {
               opticalElements[i].isReflectedStage = true; opticalElements[i].reflectedInputVector = [complex(NaN), complex(NaN)]; opticalElements[i].reflectedOutputVector = [complex(NaN), complex(NaN)]; opticalElements[i].reflectedIntensity = NaN;
          }
@@ -378,7 +310,7 @@ function recalculateSystem() {
 }
 
 
-// --- Calculate Ellipse Parameters --- 
+// --- Calculate Ellipse Parameters ---
 function calculateEllipseParameters(jonesVector) {
     if (!Array.isArray(jonesVector) || jonesVector.length !== 2 || !(jonesVector[0] instanceof Complex) || !(jonesVector[1] instanceof Complex)) {
         return { psiDeg: NaN, chiDeg: NaN, majorAxis: 0, minorAxis: 0, isValid: false };
@@ -396,12 +328,10 @@ function calculateEllipseParameters(jonesVector) {
     const E0ySq = E0y * E0y;
     const intensity = E0xSq + E0ySq;
 
-    // Handle zero intensity case
     if (intensity < EPSILON) {
         return { psiDeg: 0, chiDeg: 0, majorAxis: 0, minorAxis: 0, isValid: true }; // Represent as a point
     }
 
-    // Calculate orientation angle psi (alpha in some texts)
     let psiRad;
     if (Math.abs(E0xSq - E0ySq) < EPSILON * intensity) {
          if (Math.abs(Math.cos(delta)) < EPSILON) { psiRad = PI / 4; }
@@ -413,12 +343,10 @@ function calculateEllipseParameters(jonesVector) {
     if (psiRad < -EPSILON) { psiRad += PI; }
     else if (psiRad >= PI - EPSILON) { psiRad = 0; }
 
-    // Calculate ellipticity angle chi (epsilon in some texts)
     let sin2ChiArg = (2 * E0x * E0y * Math.sin(delta)) / intensity;
     sin2ChiArg = Math.max(-1.0, Math.min(1.0, sin2ChiArg));
     const chiRad = 0.5 * Math.asin(sin2ChiArg);
 
-    // Calculate axes for SVG drawing
     const majorAxis = SVG_MAX_RADIUS;
     const minorAxis = majorAxis * Math.abs(Math.tan(chiRad));
 
@@ -431,7 +359,7 @@ function calculateEllipseParameters(jonesVector) {
 
 // --- UI Update Functions ---
 
-// Helper to create SVG ellipse visualization 
+// Helper to create SVG ellipse visualization
 function createEllipseSVG(params) {
     const svg = document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("viewBox", "-25 -25 50 50");
@@ -447,7 +375,7 @@ function createEllipseSVG(params) {
     return svg;
 }
 
-// Helper to create Psi/Chi text block 
+// Helper to create Psi/Chi text block
 function createPsiChiText(params) {
     const textDiv = document.createElement('div');
     textDiv.classList.add('psi-chi-text');
@@ -455,6 +383,36 @@ function createPsiChiText(params) {
     else { textDiv.innerHTML = `ψ: ${params.psiDeg.toFixed(1)}°<br>χ: ${params.chiDeg.toFixed(1)}°`; }
     textDiv.title = "Orientation Angle (ψ)\nEllipticity Angle (χ)";
     return textDiv;
+}
+
+// Function to calculate Jones Vector from Psi and Chi (Inverse Calculation)
+// psiRad: Orientation angle (0 to PI)
+// chiRad: Ellipticity angle (-PI/4 to PI/4)
+// Returns a NORMALIZED Jones vector [Ex, Ey]
+function calculateJonesVectorFromPsiChi(psiRad, chiRad) {
+    // Clamp angles to avoid potential issues outside standard ranges, although math might handle it
+    // psiRad = Math.max(0, Math.min(PI, psiRad)); // Allow full range potentially
+    // chiRad = Math.max(-PI / 4, Math.min(PI / 4, chiRad));
+
+    const cosPsi = Math.cos(psiRad);
+    const sinPsi = Math.sin(psiRad);
+    const cosChi = Math.cos(chiRad);
+    const sinChi = Math.sin(chiRad);
+
+    // Formulas based on common definition (e.g., Wikipedia Jones Calculus page)
+    const Ex_re = cosPsi * cosChi;
+    const Ex_im = -sinPsi * sinChi;
+    const Ey_re = sinPsi * cosChi;
+    const Ey_im = cosPsi * sinChi;
+
+    const Ex = complex(Ex_re, Ex_im);
+    const Ey = complex(Ey_re, Ey_im);
+
+    // The formulas inherently produce a normalized vector if psi/chi are correct
+    const vec = [Ex, Ey];
+    // Optional: Explicitly normalize for safety, though shouldn't be strictly necessary
+    // return normalizeVector(vec);
+    return vec;
 }
 
 // Main Table Update Function (Handles Forward and Reflected Paths)
@@ -465,16 +423,17 @@ function updateTable() {
 
     // --- Add Initial Beam Row ---
     const initialRow = tableBody.insertRow();
-    initialRow.insertCell().textContent = 'Input Beam';   // Type
-    initialRow.insertCell().textContent = 'z = 0';        // Position
-    const initialPropsCell = initialRow.insertCell();      // Properties
+    initialRow.insertCell().textContent = 'Input Beam';
+    initialRow.insertCell().textContent = 'z = 0';
+    const initialPropsCell = initialRow.insertCell();
     initialPropsCell.classList.add('initial-properties-cell');
-    const initialEllipseCell = initialRow.insertCell();    // Ellipse
-    initialEllipseCell.classList.add('ellipse-cell');
-    const initialVecCell = initialRow.insertCell();        // Output Vector (Technically Input here)
+    const initialEllipseCell = initialRow.insertCell(); // Ellipse cell
+    initialEllipseCell.classList.add('ellipse-cell', 'input-ellipse-cell'); // Added class for specific styling
+    const initialVecCell = initialRow.insertCell();        // Output Vector
     const initialIntCell = initialRow.insertCell();        // Intensity
-    initialRow.insertCell().textContent = '—';            // Actions (none for initial)
+    initialRow.insertCell().textContent = '—';            // Actions
 
+    // --- Initial Polarization Properties (Dropdown + Custom Jones) ---
     const initialLabel = document.createElement('label'); initialLabel.htmlFor = 'initial-polarization-inline'; initialLabel.textContent = 'Polarization:';
     const initialSelect = document.createElement('select'); initialSelect.id = 'initial-polarization-inline';
     initialSelect.innerHTML = `<option value="H">Horizontal |H⟩ [1, 0]</option><option value="V">Vertical |V⟩ [0, 1]</option><option value="D">Diagonal L+45 |D⟩ [1/√2, 1/√2]</option><option value="A">Anti-diagonal L-45 |A⟩ [1/√2, -1/√2]</option><option value="R">Circular CCW |R⟩ [1/√2, +i/√2]</option><option value="L">Circular CW |L⟩ [1/√2, -i/√2]</option><option value="Custom">Custom...</option>`;
@@ -488,12 +447,66 @@ function updateTable() {
     initialPropsCell.appendChild(initialLabel); initialPropsCell.appendChild(initialSelect); initialPropsCell.appendChild(customDiv);
     const customBtn = initialPropsCell.querySelector('#set-custom-initial-inline'); if(customBtn) { customBtn.addEventListener('click', () => handleSetCustomInitial(true)); }
 
-    if (initialStateType === 'Custom') { const customOption = initialSelect.querySelector('option[value="Custom"]'); if (customOption) { const normVec = normalizeVector(initialJonesVector); if (!isNaN(normVec[0].re)) { customOption.textContent = `Custom [${normVec[0].re.toFixed(2)}${normVec[0].im >= 0 ? '+' : ''}${normVec[0].im.toFixed(2)}i, ${normVec[1].re.toFixed(2)}${normVec[1].im >= 0 ? '+' : ''}${normVec[1].im.toFixed(2)}i]`; } else { customOption.textContent = `Custom [Invalid]`; } } }
+    if (initialStateType === 'Custom') {
+        const customOption = initialSelect.querySelector('option[value="Custom"]');
+        if (customOption) {
+            const normVec = normalizeVector(initialJonesVector); // Use current (potentially unnormalized if just set from psi/chi)
+            if (!isNaN(normVec[0]?.re)) {
+                customOption.textContent = `Custom [${normVec[0].re.toFixed(2)}${normVec[0].im >= 0 ? '+' : ''}${normVec[0].im.toFixed(2)}i, ${normVec[1].re.toFixed(2)}${normVec[1].im >= 0 ? '+' : ''}${normVec[1].im.toFixed(2)}i]`;
+            } else {
+                customOption.textContent = `Custom [Invalid]`;
+            }
+        }
+     }
 
-    const initialParams = calculateEllipseParameters(initialJonesVector); initialEllipseCell.appendChild(createEllipseSVG(initialParams)); initialEllipseCell.appendChild(createPsiChiText(initialParams));
-    const iVec = initialJonesVector; if (!isNaN(iVec[0].re) && !isNaN(iVec[1].re)) { initialVecCell.textContent = `[${iVec[0].re.toFixed(3)}${iVec[0].im >= 0 ? '+' : ''}${iVec[0].im.toFixed(3)}i, ${iVec[1].re.toFixed(3)}${iVec[1].im >= 0 ? '+' : ''}${iVec[1].im.toFixed(3)}i]`; initialIntCell.textContent = vecMagSq(iVec).toFixed(4); } else { initialVecCell.textContent = '[NaN, NaN]'; initialIntCell.textContent = 'NaN'; } initialIntCell.style.textAlign = 'right';
+    // --- Initial Ellipse Cell (SVG + EDITABLE Psi/Chi Inputs) ---
+    const initialParams = calculateEllipseParameters(initialJonesVector);
+    initialEllipseCell.appendChild(createEllipseSVG(initialParams)); // Keep the SVG
+
+    // Create container for Psi/Chi inputs
+    const psiChiInputsDiv = document.createElement('div');
+    psiChiInputsDiv.classList.add('psi-chi-inputs'); // Add class for styling
+
+    // Psi Input
+    const psiLabel = document.createElement('label'); psiLabel.htmlFor = 'initial-psi-input'; psiLabel.textContent = 'ψ:';
+    const psiInput = document.createElement('input');
+    psiInput.type = 'number'; psiInput.id = 'initial-psi-input'; psiInput.step = 0.1;
+    psiInput.value = (!initialParams || isNaN(initialParams.psiDeg)) ? '' : initialParams.psiDeg.toFixed(1);
+    psiInput.title = 'Orientation Angle ψ (0° to 180°)';
+    psiInput.addEventListener('keydown', handleInitialPsiChiEnter);
+    psiInput.addEventListener('blur', (e) => handleInitialPsiChiChange(e, false)); // Handle blur
+
+    // Chi Input
+    const chiLabel = document.createElement('label'); chiLabel.htmlFor = 'initial-chi-input'; chiLabel.textContent = 'χ:';
+    const chiInput = document.createElement('input');
+    chiInput.type = 'number'; chiInput.id = 'initial-chi-input'; chiInput.step = 0.1;
+    chiInput.value = (!initialParams || isNaN(initialParams.chiDeg)) ? '' : initialParams.chiDeg.toFixed(1);
+    chiInput.title = 'Ellipticity Angle χ (-45° to +45°)';
+    chiInput.addEventListener('keydown', handleInitialPsiChiEnter);
+    chiInput.addEventListener('blur', (e) => handleInitialPsiChiChange(e, false)); // Handle blur
+
+    // Append inputs and labels
+    psiChiInputsDiv.appendChild(psiLabel);
+    psiChiInputsDiv.appendChild(psiInput);
+    psiChiInputsDiv.appendChild(document.createElement('br')); // Line break
+    psiChiInputsDiv.appendChild(chiLabel);
+    psiChiInputsDiv.appendChild(chiInput);
+
+    initialEllipseCell.appendChild(psiChiInputsDiv); // Add inputs below SVG
+
+    // --- Initial Vector and Intensity (Display Only) ---
+    const iVec = initialJonesVector;
+    if (!isNaN(iVec[0]?.re) && !isNaN(iVec[1]?.re)) {
+        initialVecCell.textContent = `[${iVec[0].re.toFixed(3)}${iVec[0].im >= 0 ? '+' : ''}${iVec[0].im.toFixed(3)}i, ${iVec[1].re.toFixed(3)}${iVec[1].im >= 0 ? '+' : ''}${iVec[1].im.toFixed(3)}i]`;
+        initialIntCell.textContent = vecMagSq(iVec).toFixed(4); // Show intensity of current vector
+    } else {
+        initialVecCell.textContent = '[NaN, NaN]';
+        initialIntCell.textContent = 'NaN';
+    }
+    initialIntCell.style.textAlign = 'right';
 
     // --- Add Rows for Optical Elements (Forward Pass Rendering) ---
+    // ... (rest of the element rows generation code remains the same) ...
     let doublePassMirrorFound = false;
     let doublePassMirrorIndex = -1;
     opticalElements.forEach((el, index) => {
@@ -509,11 +522,23 @@ function updateTable() {
         const posCell = row.insertCell(); const posInput = document.createElement('input'); posInput.type = 'number'; posInput.value = el.position.toFixed(2); posInput.step = 0.1; posInput.min = 0; posInput.dataset.param = 'position'; posCell.appendChild(posInput); posCell.title = `Absolute Position (z = ${el.position.toFixed(2)})`; // Position
         const propertiesCell = row.insertCell(); propertiesCell.classList.add('properties-cell'); populateElementProperties(propertiesCell, el); // Properties
 
-        // Ellipse (Modified for Active Mirror)
+        // Ellipse (Display only for elements)
         const ellipseCell = row.insertCell(); ellipseCell.classList.add('ellipse-cell'); let ellipseParams; let ellipseTitle = "Polarization ellipse after this element (forward path)";
-        if (isActiveMirror && el.inputVector) { const inputVec = el.inputVector; let initialReflectedVectorForDisplay = [complex(NaN), complex(NaN)]; if (Array.isArray(inputVec) && inputVec.length === 2 && inputVec[0] instanceof Complex && inputVec[1] instanceof Complex && !isNaN(inputVec[0].re) && !isNaN(inputVec[1].re)) { const transformedVec = multiplyMatrixVector(REFLECTION_COORD_TRANSFORM, inputVec); if (!isNaN(transformedVec[0]?.re) && !isNaN(transformedVec[1]?.re)) { initialReflectedVectorForDisplay = transformedVec; /* Removed mul(-1) - phase shift handled by coord transform*/ } } ellipseParams = calculateEllipseParameters(initialReflectedVectorForDisplay); ellipseTitle = "Polarization ellipse of the *reflected* beam immediately after the mirror (in reflected coords)"; }
-        else { ellipseParams = calculateEllipseParameters(el.outputVector); if (el.type === 'Mirror' && !el.parameters?.isDoublePass) { ellipseTitle = "Polarization ellipse after non-double-pass mirror (forward path)"; } }
-        ellipseCell.appendChild(createEllipseSVG(ellipseParams)); ellipseCell.appendChild(createPsiChiText(ellipseParams)); ellipseCell.title = ellipseTitle;
+        if (isActiveMirror && el.inputVector) {
+            // ... (mirror ellipse logic) ...
+            const inputVec = el.inputVector; let initialReflectedVectorForDisplay = [complex(NaN), complex(NaN)]; if (Array.isArray(inputVec) && inputVec.length === 2 && inputVec[0] instanceof Complex && inputVec[1] instanceof Complex && !isNaN(inputVec[0].re) && !isNaN(inputVec[1].re)) { const transformedVec = multiplyMatrixVector(REFLECTION_COORD_TRANSFORM, inputVec); if (!isNaN(transformedVec[0]?.re) && !isNaN(transformedVec[1]?.re)) { initialReflectedVectorForDisplay = transformedVec; } } ellipseParams = calculateEllipseParameters(initialReflectedVectorForDisplay); ellipseTitle = "Polarization ellipse of the *reflected* beam immediately after the mirror (in reflected coords)";
+        } else {
+            ellipseParams = calculateEllipseParameters(el.outputVector); if (el.type === 'Mirror' && !el.parameters?.isDoublePass) { ellipseTitle = "Polarization ellipse after non-double-pass mirror (forward path)"; }
+        }
+        ellipseCell.appendChild(createEllipseSVG(ellipseParams));
+        // Display text for element rows
+        const textDiv = document.createElement('div');
+        textDiv.classList.add('psi-chi-text'); // Use existing class for display
+        if (!ellipseParams || !ellipseParams.isValid || isNaN(ellipseParams.psiDeg) || isNaN(ellipseParams.chiDeg)) { textDiv.innerHTML = `ψ: NaN<br>χ: NaN`; }
+        else { textDiv.innerHTML = `ψ: ${ellipseParams.psiDeg.toFixed(1)}°<br>χ: ${ellipseParams.chiDeg.toFixed(1)}°`; }
+        textDiv.title = ellipseTitle; // Use the calculated title
+        ellipseCell.appendChild(textDiv);
+
 
         // Output Vector (Forward Path Output)
         const outVecCell = row.insertCell(); let outExStr = 'NaN', outEyStr = 'NaN', intensityMag = NaN;
@@ -530,7 +555,7 @@ function updateTable() {
     });
 
     // --- Add Rows for Reflected Path (if applicable) ---
-    if (doublePassMirrorFound) {
+     if (doublePassMirrorFound) {
         const mirrorElement = opticalElements[doublePassMirrorIndex]; let mirrorZ = NaN; if (mirrorElement && typeof mirrorElement.position === 'number' && !isNaN(mirrorElement.position)) { mirrorZ = mirrorElement.position; } else { console.error("Could not find valid mirror position for relative calculation."); }
 
         for (let i = doublePassMirrorIndex - 1; i >= 0; i--) {
@@ -550,8 +575,17 @@ function updateTable() {
             const angleInput = propertiesCell.querySelector('input[data-param="angle"]');
             if (angleInput && ['Linear Polarizer', 'HWP', 'QWP', 'General Waveplate', 'Arbitrary Birefringent'].includes(el.type)) { const originalAngle = el.angle || 0; const effectiveAngle = -originalAngle; const infoSpan = document.createElement('span'); infoSpan.className = 'reflected-angle-info'; infoSpan.textContent = ` (Eff: ${effectiveAngle.toFixed(1)}°)`; angleInput.parentNode.appendChild(infoSpan); }
 
-            // Ellipse (Reflected)
-            const ellipseCell = row.insertCell(); ellipseCell.classList.add('ellipse-cell'); const reflectedParams = calculateEllipseParameters(el.reflectedOutputVector); ellipseCell.appendChild(createEllipseSVG(reflectedParams)); ellipseCell.appendChild(createPsiChiText(reflectedParams)); ellipseCell.title = "Polarization ellipse after this element (reflected path)";
+            // Ellipse (Reflected - Display Only)
+            const ellipseCell = row.insertCell(); ellipseCell.classList.add('ellipse-cell');
+            const reflectedParams = calculateEllipseParameters(el.reflectedOutputVector);
+            ellipseCell.appendChild(createEllipseSVG(reflectedParams));
+            // Display text for reflected rows
+            const reflectedTextDiv = document.createElement('div');
+            reflectedTextDiv.classList.add('psi-chi-text');
+            if (!reflectedParams || !reflectedParams.isValid || isNaN(reflectedParams.psiDeg) || isNaN(reflectedParams.chiDeg)) { reflectedTextDiv.innerHTML = `ψ: NaN<br>χ: NaN`; }
+            else { reflectedTextDiv.innerHTML = `ψ: ${reflectedParams.psiDeg.toFixed(1)}°<br>χ: ${reflectedParams.chiDeg.toFixed(1)}°`; }
+            reflectedTextDiv.title = "Polarization ellipse after this element (reflected path)";
+            ellipseCell.appendChild(reflectedTextDiv);
 
             // Output Vector (Reflected)
             const outVecCell = row.insertCell(); let refOutExStr = 'NaN', refOutEyStr = 'NaN', refIntensityMag = NaN;
@@ -564,6 +598,7 @@ function updateTable() {
             row.insertCell().textContent = '—'; // Actions
         }
     }
+    // --- Sync Canvas ---
     if (window.syncCanvasElements) { window.syncCanvasElements(opticalElements); }
     else { console.warn("window.syncCanvasElements not ready for updateTable"); }
 }
@@ -597,7 +632,7 @@ function populateElementProperties(cell, element) {
 }
 
 
-// --- updateIntensityPlot (Handles Mirror Cutoff) --- 
+// --- updateIntensityPlot (Handles Mirror Cutoff) ---
 function updateIntensityPlot() {
     let zCoords = [0]; let initialIntensity = vecMagSq(initialJonesVector); let intensities = [isNaN(initialIntensity) ? 0 : initialIntensity]; let doublePassMirrorFound = false; let mirrorZ = Infinity; let maxIntensity = isNaN(initialIntensity) ? 0 : initialIntensity;
     const mirrorElement = opticalElements.find(el => el.type === 'Mirror' && el.parameters?.isDoublePass); if (mirrorElement) { doublePassMirrorFound = true; mirrorZ = mirrorElement.position; }
@@ -618,7 +653,7 @@ function updateIntensityPlot() {
 
 // --- Event Handlers ---
 
-// Add Element Button 
+// Add Element Button
 function handleAddElement() {
     const type = addElementSelect.value; let lastElementPos = 0; if (opticalElements.length > 0) { const validPositions = opticalElements.map(el => el.position).filter(p => !isNaN(p) && isFinite(p)); if (validPositions.length > 0) { lastElementPos = Math.max(0, ...validPositions); } } const newPosition = lastElementPos + 1.0;
     const newElement = { id: nextElementId++, type: type, position: newPosition, angle: 0, parameters: {}, inputVector: null, outputVector: null, jonesMatrix: null, intensity: null, reflectedInputVector: null, reflectedOutputVector: null, reflectedIntensity: null, isReflectedStage: false };
@@ -626,7 +661,7 @@ function handleAddElement() {
     opticalElements.push(newElement); recalculateSystem();
 }
 
-// Remove Element Button 
+// Remove Element Button
 function removeElement(id) {
     const elementToRemove = opticalElements.find(el => el.id === id); if (!elementToRemove) return;
     const wasDoublePassMirror = elementToRemove.type === 'Mirror' && elementToRemove.parameters?.isDoublePass;
@@ -635,29 +670,419 @@ function removeElement(id) {
     recalculateSystem();
 }
 
-// Initial Polarization Dropdown Change 
+// Initial Polarization Dropdown Change
 function handleInitialPolarizationChange(isInline = false) {
     const selectElement = document.getElementById('initial-polarization-inline'); if (!selectElement) return;
-    const selection = selectElement.value; initialStateType = selection;
-    const customDiv = document.getElementById('custom-initial-polarization-inline'); if(customDiv) customDiv.style.display = selection === 'Custom' ? 'block' : 'none';
-    if (selection !== 'Custom') { setInitialPolarization(selection); recalculateSystem(); }
+    const selection = selectElement.value;
+    initialStateType = selection; // Update state type first
+
+    const customDiv = document.getElementById('custom-initial-polarization-inline');
+    const psiChiInputsDiv = document.querySelector('.input-ellipse-cell .psi-chi-inputs'); // Target the inputs
+
+    if (selection === 'Custom') {
+        if(customDiv) customDiv.style.display = 'block';
+        if(psiChiInputsDiv) psiChiInputsDiv.style.display = 'block'; // Show Psi/Chi inputs for custom
+        // Don't immediately recalculate if "Custom..." is selected, wait for user input
+        // Update the table to reflect the current custom state
+        updateTable(); // Update table to show current custom values
+    } else {
+        if(customDiv) customDiv.style.display = 'none';
+        if(psiChiInputsDiv) psiChiInputsDiv.style.display = 'block'; // Keep Psi/Chi visible for standard states too
+        setInitialPolarization(selection); // This sets initialJonesVector and initialStateType
+        recalculateSystem(); // Recalculate based on the new standard state
+    }
 }
 
-// Set Custom Initial Polarization Button 
+// Set Custom Initial Polarization from Jones Vector Inputs
 function handleSetCustomInitial(isInline = false) {
-    const suffix = '-inline'; try { const ex_re_str = document.getElementById(`initial-ex-real${suffix}`).value; const ex_im_str = document.getElementById(`initial-ex-imag${suffix}`).value; const ey_re_str = document.getElementById(`initial-ey-real${suffix}`).value; const ey_im_str = document.getElementById(`initial-ey-imag${suffix}`).value; const ex_re = parseFloat(ex_re_str); const ex_im = parseFloat(ex_im_str); const ey_re = parseFloat(ey_re_str); const ey_im = parseFloat(ey_im_str); if ([ex_re, ex_im, ey_re, ey_im].some(isNaN)) { throw new Error("Invalid number input. Please enter valid numbers for all parts."); } const vec = [complex(ex_re, ex_im), complex(ey_re, ey_im)]; const normVec = normalizeVector(vec); initialJonesVector = normVec; window.initialJonesVector = initialJonesVector; initialStateType = 'Custom'; recalculateSystem(); } catch (error) { alert("Invalid custom polarization input: " + error.message); }
+    const suffix = '-inline';
+    try {
+        const ex_re_str = document.getElementById(`initial-ex-real${suffix}`).value;
+        const ex_im_str = document.getElementById(`initial-ex-imag${suffix}`).value;
+        const ey_re_str = document.getElementById(`initial-ey-real${suffix}`).value;
+        const ey_im_str = document.getElementById(`initial-ey-imag${suffix}`).value;
+
+        const ex_re = parseFloat(ex_re_str);
+        const ex_im = parseFloat(ex_im_str);
+        const ey_re = parseFloat(ey_re_str);
+        const ey_im = parseFloat(ey_im_str);
+
+        if ([ex_re, ex_im, ey_re, ey_im].some(isNaN)) {
+            throw new Error("Invalid number input. Please enter valid numbers for all parts.");
+        }
+
+        const vec = [complex(ex_re, ex_im), complex(ey_re, ey_im)];
+        const normVec = normalizeVector(vec); // Always normalize
+        initialJonesVector = normVec;
+        window.initialJonesVector = initialJonesVector;
+        initialStateType = 'Custom'; // Set state to custom
+        recalculateSystem(); // Update everything
+
+    } catch (error) {
+        alert("Invalid custom polarization input: " + error.message);
+        // Optionally revert input fields in table if error occurs
+         updateTable();
+    }
 }
 
-// Helper to set Jones vector from predefined types 
+// --- Handle changes to Psi/Chi Inputs ---
+function handleInitialPsiChiChange(event, isEnterKey = false) {
+    const psiInput = document.getElementById('initial-psi-input');
+    const chiInput = document.getElementById('initial-chi-input');
+    if (!psiInput || !chiInput) return;
+
+    const psiDegStr = psiInput.value;
+    const chiDegStr = chiInput.value;
+
+    const psiDeg = parseFloat(psiDegStr);
+    const chiDeg = parseFloat(chiDegStr);
+
+    // --- Basic Validation ---
+    if (isNaN(psiDeg) || isNaN(chiDeg)) {
+        // If called by Enter key, alert. If by blur, maybe silently revert?
+        // For simplicity, let's revert and log warning for now.
+        console.warn("Invalid Psi/Chi input (non-numeric). Reverting.");
+        // Revert inputs to reflect the *current* state before the invalid change
+        const currentParams = calculateEllipseParameters(initialJonesVector);
+        psiInput.value = isNaN(currentParams.psiDeg) ? '' : currentParams.psiDeg.toFixed(1);
+        chiInput.value = isNaN(currentParams.chiDeg) ? '' : currentParams.chiDeg.toFixed(1);
+        if (isEnterKey) {
+            alert("Invalid input: Psi and Chi must be numbers.");
+        }
+        return;
+    }
+
+    // --- Optional: Angle Range Clamping/Warning (more user-friendly) ---
+    let clampedPsi = psiDeg;
+    let clampedChi = chiDeg;
+    // Psi is typically 0-180
+    if (psiDeg < 0 || psiDeg > 180) {
+        // console.warn(`Psi value ${psiDeg}° outside typical range [0, 180]. Using value as entered.`);
+        // Or clamp: clampedPsi = Math.max(0, Math.min(180, psiDeg));
+    }
+     // Chi is typically -45 to 45
+    if (chiDeg < -45 || chiDeg > 45) {
+       // console.warn(`Chi value ${chiDeg}° outside typical range [-45, 45]. Using value as entered.`);
+       // Or clamp: clampedChi = Math.max(-45, Math.min(45, chiDeg));
+    }
+    // Update input fields if clamped (optional)
+    // psiInput.value = clampedPsi.toFixed(1);
+    // chiInput.value = clampedChi.toFixed(1);
+
+
+    // --- Check if values actually changed ---
+    const currentParams = calculateEllipseParameters(initialJonesVector);
+    const psiDiff = Math.abs(currentParams.psiDeg - clampedPsi);
+    const chiDiff = Math.abs(currentParams.chiDeg - clampedChi);
+
+    // Use a tolerance for floating point comparison
+    if (psiDiff < 0.05 && chiDiff < 0.05) {
+        // console.log("Psi/Chi values didn't change significantly.");
+        // Ensure inputs show the correctly formatted current value
+        psiInput.value = isNaN(currentParams.psiDeg) ? '' : currentParams.psiDeg.toFixed(1);
+        chiInput.value = isNaN(currentParams.chiDeg) ? '' : currentParams.chiDeg.toFixed(1);
+        if (isEnterKey) event.target.blur(); // Defocus on Enter if no change
+        return; // No change needed
+    }
+
+    // --- Values are valid and changed: Calculate new Jones Vector ---
+    console.log(`Updating initial state from Psi=${clampedPsi.toFixed(1)}°, Chi=${clampedChi.toFixed(1)}°`);
+    const psiRad = clampedPsi * DEG_TO_RAD;
+    const chiRad = clampedChi * DEG_TO_RAD;
+
+    const newVector = calculateJonesVectorFromPsiChi(psiRad, chiRad);
+
+    // Update Global State
+    initialJonesVector = newVector; // Already normalized from calculation
+    window.initialJonesVector = initialJonesVector;
+    initialStateType = 'Custom'; // Force state to Custom
+
+    // Recalculate and Update UI
+    recalculateSystem();
+
+    // Defocus if change was triggered by Enter key
+    if (isEnterKey) {
+        event.target.blur();
+    }
+}
+
+// Handle Enter Key specifically for Psi/Chi inputs
+function handleInitialPsiChiEnter(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent potential form submission/other default actions
+        handleInitialPsiChiChange(event, true); // Pass flag indicating Enter key
+    }
+}
+
+// Helper to set Jones vector from predefined types
 function setInitialPolarization(type) {
     let vec; switch(type) { case 'H': vec = [complex(1), complex(0)]; break; case 'V': vec = [complex(0), complex(1)]; break; case 'D': vec = [complex(sqrt2Inv), complex(sqrt2Inv)]; break; case 'A': vec = [complex(sqrt2Inv), complex(-sqrt2Inv)]; break; case 'R': vec = [complex(sqrt2Inv), complex(0, sqrt2Inv)]; break; case 'L': vec = [complex(sqrt2Inv), complex(0, -sqrt2Inv)]; break; default: console.warn("Unknown polarization type:", type, "defaulting to H."); vec = [complex(1), complex(0)]; type = 'H'; }
-    initialJonesVector = normalizeVector(vec); window.initialJonesVector = initialJonesVector; initialStateType = type;
+    initialJonesVector = normalizeVector(vec); // Ensure normalized
+    window.initialJonesVector = initialJonesVector;
+    initialStateType = type; // Set the state type name
 }
+
+
+// --- START: Export/Import Handlers ---
+
+// Export current setup to XML
+function handleExport() {
+    try {
+        let xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xmlString += '<polarizationSetup>\n';
+
+        // Initial State
+        xmlString += '  <initialState type="' + initialStateType + '"';
+        if (initialStateType === 'Custom') {
+            xmlString += ' ex_re="' + (initialJonesVector[0]?.re ?? 0).toFixed(6) + '"';
+            xmlString += ' ex_im="' + (initialJonesVector[0]?.im ?? 0).toFixed(6) + '"';
+            xmlString += ' ey_re="' + (initialJonesVector[1]?.re ?? 0).toFixed(6) + '"';
+            xmlString += ' ey_im="' + (initialJonesVector[1]?.im ?? 0).toFixed(6) + '"';
+        }
+        xmlString += ' />\n';
+
+        // Elements
+        xmlString += '  <elements>\n';
+        opticalElements.forEach(el => {
+            xmlString += `    <element type="${el.type}" position="${el.position.toFixed(4)}"`;
+            if (typeof el.angle === 'number') {
+                xmlString += ` angle="${el.angle.toFixed(4)}"`;
+            }
+            if (el.parameters) {
+                if (typeof el.parameters.eta === 'number') {
+                    xmlString += ` eta="${el.parameters.eta.toFixed(4)}"`;
+                }
+                if (typeof el.parameters.delta === 'number') {
+                    xmlString += ` delta="${el.parameters.delta.toFixed(4)}"`;
+                }
+                if (typeof el.parameters.theta_rot === 'number') {
+                    xmlString += ` theta_rot="${el.parameters.theta_rot.toFixed(4)}"`;
+                }
+                if (typeof el.parameters.isDoublePass === 'boolean') {
+                    xmlString += ` isDoublePass="${el.parameters.isDoublePass}"`; // Save as "true" or "false"
+                }
+            }
+            xmlString += ' />\n';
+        });
+        xmlString += '  </elements>\n';
+        xmlString += '</polarizationSetup>\n';
+
+        // Create Blob and Download Link
+        const blob = new Blob([xmlString], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'polarization_setup.xml';
+        document.body.appendChild(a); // Required for Firefox
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log("Setup exported successfully.");
+
+    } catch (error) {
+        console.error("Error during export:", error);
+        alert("Failed to export setup. See console for details.");
+    }
+}
+
+// Trigger hidden file input for import
+function handleImport() {
+    if (importFileInput) {
+        importFileInput.click(); // Open file dialog
+    } else {
+        console.error("Import file input element not found.");
+    }
+}
+
+// Process the selected file
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        console.log("No file selected for import.");
+        return;
+    }
+
+    // Optional: Check file type (basic check)
+    if (!file.name.toLowerCase().endsWith('.xml') && file.type !== 'application/xml') {
+         console.warn(`Selected file "${file.name}" might not be an XML file. Proceeding anyway.`);
+         // alert(`Warning: Selected file "${file.name}" might not be an XML file.`);
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        const xmlText = e.target.result;
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+
+            // Check for parsing errors
+            const parserError = xmlDoc.querySelector("parsererror");
+            if (parserError) {
+                console.error("XML Parsing Error:", parserError.textContent);
+                throw new Error("Failed to parse XML file. Content may be invalid.");
+            }
+
+            // --- Process Initial State ---
+            const initialStateNode = xmlDoc.querySelector("polarizationSetup > initialState");
+            if (!initialStateNode) {
+                throw new Error("Invalid format: <initialState> tag not found.");
+            }
+            const stateTypeAttr = initialStateNode.getAttribute("type");
+            if (!stateTypeAttr) {
+                throw new Error("Invalid format: 'type' attribute missing in <initialState>.");
+            }
+
+            if (stateTypeAttr === 'Custom') {
+                const ex_re = parseFloat(initialStateNode.getAttribute("ex_re") || '0');
+                const ex_im = parseFloat(initialStateNode.getAttribute("ex_im") || '0');
+                const ey_re = parseFloat(initialStateNode.getAttribute("ey_re") || '0');
+                const ey_im = parseFloat(initialStateNode.getAttribute("ey_im") || '0');
+                 if ([ex_re, ex_im, ey_re, ey_im].some(isNaN)) {
+                     throw new Error("Invalid custom state values in XML.");
+                 }
+                 const vec = [complex(ex_re, ex_im), complex(ey_re, ey_im)];
+                 initialJonesVector = normalizeVector(vec); // Ensure normalized
+                 window.initialJonesVector = initialJonesVector;
+                 initialStateType = 'Custom';
+            } else {
+                 // Use existing function for standard types
+                 setInitialPolarization(stateTypeAttr);
+                 // Ensure initialStateType reflects the loaded type
+                 initialStateType = stateTypeAttr;
+            }
+            console.log("Initial state loaded:", initialStateType);
+
+
+            // --- Process Elements ---
+            const elementsNode = xmlDoc.querySelector("polarizationSetup > elements");
+            if (!elementsNode) {
+                throw new Error("Invalid format: <elements> tag not found.");
+            }
+
+            // Clear existing elements
+            opticalElements.length = 0; // Clear array in place
+            window.opticalElements = opticalElements; // Update global reference
+            nextElementId = 0; // Reset ID counter
+
+            const elementNodes = elementsNode.querySelectorAll("element");
+            let activeDoublePassMirrorFound = false; // Track if a double-pass mirror is loaded
+
+            elementNodes.forEach(node => {
+                const type = node.getAttribute("type");
+                const positionStr = node.getAttribute("position");
+                const angleStr = node.getAttribute("angle"); // Might be null
+
+                if (!type || !positionStr) {
+                    console.warn("Skipping element due to missing type or position attribute:", node.outerHTML);
+                    return; // Skip this element
+                }
+
+                const position = parseFloat(positionStr);
+                if (isNaN(position)) {
+                     console.warn("Skipping element due to invalid position attribute:", node.outerHTML);
+                     return;
+                }
+
+                const angle = (angleStr !== null) ? parseFloat(angleStr) : 0; // Default angle to 0 if missing
+                 if (isNaN(angle)) {
+                     console.warn(`Invalid angle "${angleStr}" for element, defaulting to 0.`, node.outerHTML);
+                     angle = 0;
+                 }
+
+                const newElement = {
+                    id: nextElementId++,
+                    type: type,
+                    position: position,
+                    angle: angle,
+                    parameters: {},
+                    // Reset calculated fields
+                    inputVector: null, outputVector: null, jonesMatrix: null, intensity: null,
+                    reflectedInputVector: null, reflectedOutputVector: null, reflectedIntensity: null,
+                    isReflectedStage: false, reflectedJonesMatrix: null
+                };
+
+                // Load parameters based on type
+                const etaStr = node.getAttribute("eta");
+                const deltaStr = node.getAttribute("delta");
+                const thetaRotStr = node.getAttribute("theta_rot");
+                const isDoublePassStr = node.getAttribute("isDoublePass");
+
+                if (etaStr !== null && !['Linear Polarizer', 'Mirror', 'Faraday Rotator'].includes(type)) {
+                    newElement.parameters.eta = parseFloat(etaStr);
+                    if (isNaN(newElement.parameters.eta)) {
+                        console.warn(`Invalid eta "${etaStr}" for ${type}, parameter ignored.`, node.outerHTML);
+                         delete newElement.parameters.eta;
+                    }
+                }
+                if (deltaStr !== null && type === 'Arbitrary Birefringent') {
+                    newElement.parameters.delta = parseFloat(deltaStr);
+                     if (isNaN(newElement.parameters.delta)) {
+                         console.warn(`Invalid delta "${deltaStr}" for ${type}, parameter ignored.`, node.outerHTML);
+                         delete newElement.parameters.delta;
+                     }
+                }
+                if (thetaRotStr !== null && type === 'Faraday Rotator') {
+                    newElement.parameters.theta_rot = parseFloat(thetaRotStr);
+                     if (isNaN(newElement.parameters.theta_rot)) {
+                         console.warn(`Invalid theta_rot "${thetaRotStr}" for ${type}, parameter ignored.`, node.outerHTML);
+                         delete newElement.parameters.theta_rot;
+                     }
+                }
+                if (isDoublePassStr !== null && type === 'Mirror') {
+                    const isDoublePass = isDoublePassStr.toLowerCase() === 'true';
+                    if (isDoublePass && activeDoublePassMirrorFound) {
+                        console.warn(`Multiple double-pass mirrors found in imported file. Only the first one encountered will be active. Disabling double-pass for mirror at z=${position}.`);
+                        newElement.parameters.isDoublePass = false;
+                    } else {
+                        newElement.parameters.isDoublePass = isDoublePass;
+                        if (isDoublePass) {
+                            activeDoublePassMirrorFound = true;
+                        }
+                    }
+                }
+
+                // Add default parameters if needed after loading
+                if (type === 'QWP' && typeof newElement.parameters.eta !== 'number') newElement.parameters.eta = 90;
+                if (type === 'HWP' && typeof newElement.parameters.eta !== 'number') newElement.parameters.eta = 180;
+                // Add others if necessary...
+
+                opticalElements.push(newElement);
+            });
+
+            console.log(`Successfully imported ${opticalElements.length} elements.`);
+
+            // Recalculate the system with the new setup
+            recalculateSystem();
+
+            // Reset file input value so the change event fires again if the same file is selected
+            event.target.value = null;
+
+        } catch (error) {
+            console.error("Error during import processing:", error);
+            alert("Failed to import setup: " + error.message);
+             // Optionally reset to a default state if import fails badly
+             // opticalElements.length = 0;
+             // setInitialPolarization('H');
+             // recalculateSystem();
+        }
+    };
+
+    reader.onerror = (e) => {
+        console.error("Error reading file:", e.target.error);
+        alert("Error reading the selected file.");
+        event.target.value = null; // Reset input
+    };
+
+    reader.readAsText(file); // Start reading the file
+}
+
+// --- END: Export/Import Handlers ---
 
 
 // --- Table Input Handlers ---
 
-// Handle Blur or Enter Key on Number Inputs in Table 
+// Handle Blur or Enter Key on Number Inputs in Table
 function handleTableInputBlurOrEnter(event, isEnterKey = false) {
     const input = event.target; if (input.disabled || input.type !== 'number') return;
     const row = input.closest('tr'); if (!row || !row.dataset.id || row.classList.contains('reflected-row')) return;
@@ -672,10 +1097,10 @@ function handleTableInputBlurOrEnter(event, isEnterKey = false) {
     input.value = value.toFixed(param === 'position' ? 2 : 1); recalculateSystem(); if (isEnterKey) { input.blur(); }
 }
 
-// Handle Enter Key specifically for number inputs 
+// Handle Enter Key specifically for number inputs
 function handleTableInputEnter(event) { if (event.key === 'Enter' && event.target.type === 'number') { event.preventDefault(); handleTableInputBlurOrEnter(event, true); } }
 
-// Handle Mirror Checkbox Change 
+// Handle Mirror Checkbox Change
 function handleTableCheckboxChange(event) {
     const checkbox = event.target; if (checkbox.disabled || checkbox.type !== 'checkbox') return;
     const row = checkbox.closest('tr'); if (!row || !row.dataset.id || row.classList.contains('reflected-row')) return;
@@ -687,27 +1112,36 @@ function handleTableCheckboxChange(event) {
 }
 
 
-// --- Animation Control --- 
+// --- Animation Control ---
 function toggleAnimation() { if (animationState.running) { stopAnimation(); } else { startAnimation(); } }
-function startAnimation() { if (animationState.running) return; animationState.running = true; playPauseBtn.textContent = 'Pause'; animationState.lastTimestamp = performance.now(); if (typeof animationState.time !== 'number' || isNaN(animationState.time)) { animationState.time = 0; } animationState.requestId = requestAnimationFrame(animateFrame); }
-function stopAnimation() { if (!animationState.running) return; animationState.running = false; playPauseBtn.textContent = 'Play'; if (animationState.requestId) { cancelAnimationFrame(animationState.requestId); animationState.requestId = null; } }
+function startAnimation() { if (animationState.running) return; animationState.running = true; playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause'; animationState.lastTimestamp = performance.now(); if (typeof animationState.time !== 'number' || isNaN(animationState.time)) { animationState.time = 0; } animationState.requestId = requestAnimationFrame(animateFrame); }
+function stopAnimation() { if (!animationState.running) return; animationState.running = false; playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i> Play'; if (animationState.requestId) { cancelAnimationFrame(animationState.requestId); animationState.requestId = null; } }
 function animateFrame(timestamp) { if (!animationState.running) return; let deltaTime = 0; if (animationState.lastTimestamp > 0) { deltaTime = (timestamp - animationState.lastTimestamp) / 1000.0; } animationState.lastTimestamp = timestamp; animationState.time += deltaTime; if (window.updateCanvasVisualization) { const visVector = (!isNaN(initialJonesVector[0].re)) ? initialJonesVector : [complex(1),complex(0)]; window.updateCanvasVisualization(opticalElements, visVector, animationState); } if (animationState.running) { animationState.requestId = requestAnimationFrame(animateFrame); } }
 
-// --- Initialization --- 
+// --- Initialization ---
 function init() {
     console.log("Script.js: Initializing...");
     Plotly.newPlot(intensityPlotDiv, [], {}, {responsive: true});
-    addElementBtn.addEventListener('click', handleAddElement); playPauseBtn.addEventListener('click', toggleAnimation); showElementsCheckbox.addEventListener('change', updateIntensityPlot);
+    addElementBtn.addEventListener('click', handleAddElement);
+    playPauseBtn.addEventListener('click', toggleAnimation);
+    showElementsCheckbox.addEventListener('change', updateIntensityPlot);
+
+    // --- ADDED Event Listeners for Export/Import ---
+    if (exportBtn) exportBtn.addEventListener('click', handleExport);
+    if (importBtn) importBtn.addEventListener('click', handleImport);
+    if (importFileInput) importFileInput.addEventListener('change', handleFileSelect);
+    // --- END Added Listeners ---
+
     setInitialPolarization(initialStateType);
     if (window.initCanvas) { const canvasElement = document.getElementById('visualizationCanvas'); if (canvasElement) { window.initCanvas(canvasElement, opticalElements); console.log("Script.js: Canvas initialization called."); } else { console.error("Canvas element #visualizationCanvas not found!"); } } else { console.error("initCanvas function not found on window object. Check script load order."); }
     recalculateSystem();
     console.log("Script.js: Initialization complete.");
 }
 
-// --- Global Access Function (Canvas -> Script) --- 
+// --- Global Access Function (Canvas -> Script) ---
 window.updateElementParameterFromCanvas = (id, param, value) => {
     const element = opticalElements.find(el => el.id === id); if (element) { let needsRecalculate = false; const tolerance = 1e-4; if (param === 'position') { const numericValue = parseFloat(value); if (!isNaN(numericValue)) { const clampedValue = Math.max(0, numericValue); if (Math.abs((element.position ?? 0) - clampedValue) > tolerance) { element.position = clampedValue; needsRecalculate = true; } } } else if (param === 'angle') { const numericValue = parseFloat(value); if (!isNaN(numericValue)) { const currentAngle = element.angle ?? 0; if (Math.abs(currentAngle - numericValue) > tolerance) { element.angle = numericValue; needsRecalculate = true; } } } if (needsRecalculate) { recalculateSystem(); } } else { console.warn(`Script: Element with id ${id} not found for update from canvas.`); }
 };
 
-// --- Run Initialization --- 
+// --- Run Initialization ---
 document.addEventListener('DOMContentLoaded', init);

@@ -63,7 +63,21 @@ body {
   border: 1px solid var(--border);
   border-radius: 5px;
 }
+.table-actions {
+  margin-top: 15px; /* Space above */
+  margin-bottom: 10px; /* Space below, before h3 */
+  display: flex;
+  gap: 10px; /* Space between buttons */
+}
 
+.table-actions button {
+  padding: 6px 12px; /* Adjust padding */
+  font-size: 0.9em; /* Adjust font size */
+}
+
+.table-actions button i {
+  margin-right: 6px; /* Space between icon and text */
+}
 /* Visualization Panel */
 .visualization {
   flex: 1 1 450px;
@@ -395,14 +409,53 @@ pointer-events: none;
   height: 50px;
   overflow: visible;
 }
-.psi-chi-text {
+.psi-chi-text { /* For non-input rows */
   display: block;
   font-size: 0.8em;
   color: var(--accent-yellow);
   line-height: 1.2;
   white-space: nowrap;
 }
+.input-ellipse-cell {
+  vertical-align: top; /* Align SVG and inputs nicely */
+}
 
+.psi-chi-inputs {
+  display: block;
+  font-size: 0.85em;
+  line-height: 1.5; /* Add spacing between lines */
+  text-align: center; /* Center labels and inputs */
+  margin-top: 4px; /* Space below SVG */
+}
+
+.psi-chi-inputs label {
+  display: inline-block;
+  width: 20px; /* Align labels */
+  text-align: right;
+  margin-right: 3px;
+  color: var(--accent-yellow); /* Match display text color */
+  font-weight: bold;
+}
+
+.psi-chi-inputs input[type="number"] {
+  width: 45px; /* Small inputs */
+  padding: 2px 3px;
+  font-size: 0.95em;
+  text-align: right;
+  border: 1px solid var(--border);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border-radius: 3px;
+   /* Allow spinners */
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;
+}
+/* Hide spinners for webkit browsers if desired (optional) */
+.psi-chi-inputs input[type=number]::-webkit-inner-spin-button,
+.psi-chi-inputs input[type=number]::-webkit-outer-spin-button {
+-webkit-appearance: none;
+margin: 0;
+}
 /* General Controls and Button Styling */
 button {
   padding: 5px 10px;
@@ -434,7 +487,18 @@ select {
 #add-element {
   margin-right: 5px;
 }
+#add-element-btn {
+  background-color: var(--accent-green); /* Always green background */
+  border-color: var(--accent-green);     /* Matching border */
+  color: var(--text-primary); /* Ensure text is readable (usually white) */
+}
 
+/* Optional: Define a specific hover effect for the Add button */
+#add-element-btn:hover {
+  background-color: var(--accent-green); /* Stay green */
+  border-color: var(--accent-green);     /* Stay green */
+  filter: brightness(1.15);              /* Make slightly brighter on hover */
+}
 /* Remove Button Styling (uses red accent) */
 .remove-btn {
   color: var(--accent-red);
@@ -456,6 +520,10 @@ select {
   /* margin-top: 5px; */ /* Spacing handled by flex gap */
   /* margin-bottom: 15px; */ /* Spacing handled by flex gap */
   min-width: 80px;
+}
+#play-pause-btn i {
+  margin-right: 6px; /* Adjust as needed */
+  /* vertical-align: middle; */ /* Usually not needed for buttons, but uncomment if alignment is off */
 }
 #intensityPlot {
   margin-top: 5px;
@@ -603,6 +671,15 @@ font-style: italic;
     .controls {
         min-width: 550px; /* Allow controls panel to shrink a bit */
     }
+    .table-actions {
+      flex-direction: column; /* Stack buttons */
+      gap: 5px; /* Reduce gap */
+      align-items: flex-start; /* Align left */
+  }
+  .table-actions button {
+      width: 100%; /* Make buttons full width */
+      text-align: left; /* Align text left */
+  }
     .visualization {
         min-width: 350px; /* Allow visualization panel to shrink a bit */
     }

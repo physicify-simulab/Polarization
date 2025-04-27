@@ -19,7 +19,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
-    <!-- REMOVED THE INLINE <style> BLOCK -->
 </head>
 <body>
     <!-- Dynamic Header Include -->
@@ -86,6 +85,19 @@
                 </select>
                 <button id="add-element-btn">Add</button>
             </div>
+
+            <!-- START: Added Export/Import Buttons -->
+            <div class="table-actions">
+                <button id="export-btn" title="Export current setup to XML file">
+                    <i class="fa-solid fa-file-export"></i> Export Setup
+                </button>
+                <button id="import-btn" title="Import setup from XML file (replaces current)">
+                    <i class="fa-solid fa-file-import"></i> Import Setup
+                </button>
+                <input type="file" id="import-file-input" accept=".xml,application/xml" style="display: none;">
+            </div>
+             <!-- END: Added Export/Import Buttons -->
+
             <h3>Optical Path</h3>
             <table id="elements-table">
                 <thead>
@@ -107,36 +119,40 @@
         </div>
 
         <div class="visualization">
-            <h2>3D Visualization & Intensity</h2>
+          <h2>3D Visualization & Intensity</h2>
 
-            <!-- START: Added Theme Toggle Button -->
-            <div class="theme-toggle-container">
-                 <button id="theme-toggle-btn" title="Toggle Canvas Theme (Light/Dark)">
-                     <i class="fa-solid fa-circle-half-stroke"></i> Theme
-                 </button>
-            </div>
-            <!-- END: Added Theme Toggle Button -->
+          <!-- START: Added Theme Toggle Button -->
+          <div class="theme-toggle-container">
+               <button id="theme-toggle-btn" title="Toggle Canvas Theme (Light/Dark)">
+                   <i class="fa-solid fa-circle-half-stroke"></i> Theme
+               </button>
+          </div>
+          <!-- END: Added Theme Toggle Button -->
 
-            <div id="canvas-container">
-                <canvas id="visualizationCanvas"></canvas>
-                <div id="css2d-renderer"></div>
-            </div>
-             <div class="visualization-controls">
-                 <button id="play-pause-btn">Play</button>
-                 <span style="margin-left: 15px;">Show:</span>
-                 <input type="checkbox" id="show-labels-checkbox">
-                 <label for="show-labels-checkbox">Labels</label>
-                 <input type="checkbox" id="show-efield-checkbox" checked>
-                 <label for="show-efield-checkbox">E-Field</label>
-                 <input type="checkbox" id="show-envelope-checkbox" checked>
-                 <label for="show-envelope-checkbox">Envelope</label>
-            </div>
-            <div class="plot-controls" style="margin-top: 15px;">
-                 <input type="checkbox" id="show-elements-checkbox" checked>
-                 <label for="show-elements-checkbox">Show Element Positions on Plot</label>
-            </div>
-             <div id="intensityPlot" style="width:100%;height:250px;"></div>
-        </div>
+          <div id="canvas-container">
+              <canvas id="visualizationCanvas"></canvas>
+              <div id="css2d-renderer"></div>
+          </div>
+           <div class="visualization-controls">
+               <!-- START: Modified Play/Pause Button -->
+               <button id="play-pause-btn">
+                   <i class="fa-solid fa-play"></i> Play
+               </button>
+               <!-- END: Modified Play/Pause Button -->
+               <span style="margin-left: 15px;">Show:</span>
+               <input type="checkbox" id="show-labels-checkbox">
+               <label for="show-labels-checkbox">Labels</label>
+               <input type="checkbox" id="show-efield-checkbox" checked>
+               <label for="show-efield-checkbox">E-Field</label>
+               <input type="checkbox" id="show-envelope-checkbox" checked>
+               <label for="show-envelope-checkbox">Envelope</label>
+          </div>
+          <div class="plot-controls" style="margin-top: 15px;">
+               <input type="checkbox" id="show-elements-checkbox" checked>
+               <label for="show-elements-checkbox">Show Element Positions on Plot</label>
+          </div>
+           <div id="intensityPlot" style="width:100%;height:250px;"></div>
+      </div>
     </div>
 
     <script src="script.js"></script>
