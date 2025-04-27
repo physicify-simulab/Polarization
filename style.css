@@ -55,31 +55,32 @@ body {
   margin: 0 auto 20px auto; /* Centering and bottom margin */
 }
 
-/* Controls Panel */
-.controls {
-  flex: 1 1 700px;
-  min-width: 650px;
-  background-color: var(--bg-panel);
-  padding: 15px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  /* Removed direct flex properties, children will manage layout */
-}
+/* --- REMOVED: .controls Style Block --- */
+/* .controls { ... } */
 
-/* --- START: Styles for New Boxes --- */
+/* --- START: New Style for Control Column Wrapper --- */
+.control-column {
+  flex: 1 1 700px; /* Takes up space, allows shrinking, base width */
+  min-width: 650px; /* Minimum width before wrapping */
+  display: flex; /* Use flex to arrange inner boxes */
+  flex-direction: column; /* Stack inner boxes vertically */
+  gap: 15px; /* Space between the add box and path box */
+  /* No background or border needed here, it's a logical wrapper */
+}
+/* --- END: New Style for Control Column Wrapper --- */
+
+/* --- Styles for Inner Boxes (Add Element, Optical Path) --- */
 .add-element-box,
 .optical-path-box {
-  background-color: var(--bg-box-inner); /* Use slightly different bg */
+  background-color: var(--bg-panel); /* Use panel background */
   padding: 15px;
   border: 1px solid var(--border);
   border-radius: 5px;
-  margin-bottom: 15px; /* Space between boxes */
+  /* margin-bottom: 15px; */ /* REMOVED - Gap handled by .control-column */
 }
 
-/* Remove margin from the last box */
-.optical-path-box {
-   margin-bottom: 0;
-}
+/* Remove margin from the last box (Not strictly needed with flex gap) */
+/* .optical-path-box { margin-bottom: 0; } */
 
 .add-element-box h3, /* Specific headings inside boxes */
 .optical-path-box h3 {
@@ -123,7 +124,7 @@ body {
     flex-shrink: 0; /* Prevent title from shrinking too much */
 }
 
-/* --- END: Styles for New Boxes --- */
+/* --- END: Styles for Inner Boxes --- */
 
 
 /* --- MODIFIED: Table Actions Styling --- */
@@ -265,9 +266,9 @@ h1, h2 { /* Keep general H1, H2 styling */
   /* Removed padding-top from general h2, h3 */
   color: var(--text-primary);
 }
-/* Main H2 inside .controls */
-.controls > h2 {
-   padding-left: 5px; /* Keep slight indent for the main "Controls" heading */
+/* Main H2 inside .visualization */
+.visualization > h2 {
+   padding-left: 5px; /* Keep slight indent for the main "Visualization" heading */
    margin-bottom: 15px; /* More space below main heading */
 }
 
@@ -730,17 +731,9 @@ font-style: italic;
 
 /* Adapt layout for medium screens */
 @media (max-width: 1200px) {
-    .controls {
-        min-width: 550px; /* Allow controls panel to shrink a bit */
+    .control-column { /* Adjust control column width */
+        min-width: 550px;
     }
-    /* .table-actions { */ /* Keep horizontal on medium screens */
-      /* flex-direction: row; */
-      /* align-items: center; */
-   /* } */
-    /* .table-actions button { */
-       /* width: auto; */ /* Reset width */
-       /* text-align: center; */ /* Reset text align */
-   /* } */
     .visualization {
         min-width: 350px; /* Allow visualization panel to shrink a bit */
     }
@@ -752,7 +745,7 @@ font-style: italic;
         flex-direction: column; /* Stack controls and visualization */
         padding: 15px;
     }
-    .controls, .visualization {
+    .control-column, .visualization { /* Apply to new control column */
         flex-basis: auto; /* Allow them to take full width */
         min-width: 0; /* Remove min-width constraint */
         width: 100%;
@@ -767,13 +760,14 @@ font-style: italic;
       margin: 10px; /* Reduce body margin */
   }
   .container { padding: 10px; }
-  .controls, .visualization { padding: 10px; }
+  .control-column { gap: 10px; } /* Reduce gap in control column */
+  .add-element-box, .optical-path-box, .visualization { padding: 10px; } /* Reduce padding in boxes */
   h1 {
       font-size: 1.5em; /* Adjust h1 size */
       margin: 0 10px 8px 10px; /* Adjust h1 margin */
       padding: 6px 10px; /* Adjust h1 padding */
   }
-  .controls > h2, .add-element-box h3, .optical-path-box h3 { margin-bottom: 8px; } /* Reduce heading margins */
+  .add-element-box h3, .optical-path-box h3, .visualization > h2 { margin-bottom: 8px; } /* Reduce heading margins */
 
   .h1-info {
       font-size: 0.65em;
@@ -815,7 +809,8 @@ font-style: italic;
        margin: 5px; /* Further reduce body margin */
    }
    .container { padding: 8px; }
-   .controls, .visualization { padding: 8px; }
+   .control-column { gap: 8px; } /* Further reduce gap */
+   .add-element-box, .optical-path-box, .visualization { padding: 8px; } /* Further reduce padding */
    h1 {
        font-size: 1.4em; /* Adjust h1 size */
        margin: 0 8px 6px 8px;

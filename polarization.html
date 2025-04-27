@@ -70,13 +70,14 @@
     </h1>
 
     <div class="container">
-        <div class="controls">
-             <h2>Controls</h2> <!-- This remains the overall heading -->
+        <!-- START: New Wrapper for Control Elements -->
+        <div class="control-column">
+             <!-- REMOVED Overall H2 Heading -->
 
-             <!-- START: New Box for Adding Elements -->
+             <!-- Box for Adding Elements -->
              <div class="add-element-box">
-                 <h3>Add New Element</h3> <!-- More specific heading -->
-                 <div class="add-element-controls"> <!-- Inner div for flex/layout -->
+                 <h3>Add New Element</h3>
+                 <div class="add-element-controls">
                      <label for="add-element">Select Type:</label>
                      <select id="add-element">
                          <option value="Linear Polarizer">Linear Polarizer (Angle θ)</option>
@@ -90,14 +91,11 @@
                      <button id="add-element-btn">Add</button>
                  </div>
              </div>
-             <!-- END: New Box for Adding Elements -->
 
-             <!-- START: New Box for Optical Path Table -->
+             <!-- Box for Optical Path Table -->
              <div class="optical-path-box">
-                 <!-- START: Header for Optical Path (includes buttons now) -->
                  <div class="optical-path-header">
                      <h3>Optical Path</h3>
-                     <!-- START: Moved Export/Import Buttons -->
                      <div class="table-actions">
                          <button id="export-btn" title="Export current setup to XML file">
                              <i class="fa-solid fa-file-export"></i> Export Setup
@@ -107,10 +105,7 @@
                          </button>
                          <input type="file" id="import-file-input" accept=".xml,application/xml" style="display: none;">
                      </div>
-                     <!-- END: Moved Export/Import Buttons -->
                  </div>
-                 <!-- END: Header for Optical Path -->
-
                  <table id="elements-table">
                      <thead>
                          <tr>
@@ -129,31 +124,26 @@
                  </table>
                  <p>Note: Angles/Retardation in degrees.</p>
              </div>
-             <!-- END: New Box for Optical Path Table -->
-
         </div>
+        <!-- END: New Wrapper for Control Elements -->
 
         <div class="visualization">
           <h2>3D Visualization & Intensity</h2>
 
-          <!-- START: Added Theme Toggle Button -->
           <div class="theme-toggle-container">
                <button id="theme-toggle-btn" title="Toggle Canvas Theme (Light/Dark)">
                    <i class="fa-solid fa-circle-half-stroke"></i> Theme
                </button>
           </div>
-          <!-- END: Added Theme Toggle Button -->
 
           <div id="canvas-container">
               <canvas id="visualizationCanvas"></canvas>
               <div id="css2d-renderer"></div>
           </div>
            <div class="visualization-controls">
-               <!-- START: Modified Play/Pause Button -->
                <button id="play-pause-btn">
                    <i class="fa-solid fa-play"></i> Play
                </button>
-               <!-- END: Modified Play/Pause Button -->
                <span style="margin-left: 15px;">Show:</span>
                <input type="checkbox" id="show-labels-checkbox">
                <label for="show-labels-checkbox">Labels</label>
