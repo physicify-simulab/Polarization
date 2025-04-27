@@ -71,51 +71,66 @@
 
     <div class="container">
         <div class="controls">
-             <h2>Controls</h2>
-            <div style="margin-top: 10px;">
-                <label for="add-element">Add Element:</label>
-                <select id="add-element">
-                    <option value="Linear Polarizer">Linear Polarizer (Angle θ)</option>
-                    <option value="Mirror">Mirror</option>
-                    <option value="HWP">Half-Wave Plate (HWP)</option>
-                    <option value="QWP">Quarter-Wave Plate (QWP)</option>
-                    <option value="General Waveplate">General Waveplate (Linear Retarder)</option>
-                    <option value="Arbitrary Birefringent">Arbitrary Birefringent (Elliptical Retarder)</option>
-                    <option value="Faraday Rotator">Faraday Rotator (Angle θ_rot)</option>
-                </select>
-                <button id="add-element-btn">Add</button>
-            </div>
+             <h2>Controls</h2> <!-- This remains the overall heading -->
 
-            <!-- START: Added Export/Import Buttons -->
-            <div class="table-actions">
-                <button id="export-btn" title="Export current setup to XML file">
-                    <i class="fa-solid fa-file-export"></i> Export Setup
-                </button>
-                <button id="import-btn" title="Import setup from XML file (replaces current)">
-                    <i class="fa-solid fa-file-import"></i> Import Setup
-                </button>
-                <input type="file" id="import-file-input" accept=".xml,application/xml" style="display: none;">
-            </div>
-             <!-- END: Added Export/Import Buttons -->
+             <!-- START: New Box for Adding Elements -->
+             <div class="add-element-box">
+                 <h3>Add New Element</h3> <!-- More specific heading -->
+                 <div class="add-element-controls"> <!-- Inner div for flex/layout -->
+                     <label for="add-element">Select Type:</label>
+                     <select id="add-element">
+                         <option value="Linear Polarizer">Linear Polarizer (Angle θ)</option>
+                         <option value="Mirror">Mirror</option>
+                         <option value="HWP">Half-Wave Plate (HWP)</option>
+                         <option value="QWP">Quarter-Wave Plate (QWP)</option>
+                         <option value="General Waveplate">General Waveplate (Linear Retarder)</option>
+                         <option value="Arbitrary Birefringent">Arbitrary Birefringent (Elliptical Retarder)</option>
+                         <option value="Faraday Rotator">Faraday Rotator (Angle θ_rot)</option>
+                     </select>
+                     <button id="add-element-btn">Add</button>
+                 </div>
+             </div>
+             <!-- END: New Box for Adding Elements -->
 
-            <h3>Optical Path</h3>
-            <table id="elements-table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Position (z)</th>
-                        <th>Properties</th>
-                        <th>Ellipse</th>
-                        <th>Output Vector [Ex, Ey]</th>
-                        <th>Intensity</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Table rows will be added here -->
-                </tbody>
-            </table>
-            <p>Note: Angles/Retardation in degrees.</p>
+             <!-- START: New Box for Optical Path Table -->
+             <div class="optical-path-box">
+                 <!-- START: Header for Optical Path (includes buttons now) -->
+                 <div class="optical-path-header">
+                     <h3>Optical Path</h3>
+                     <!-- START: Moved Export/Import Buttons -->
+                     <div class="table-actions">
+                         <button id="export-btn" title="Export current setup to XML file">
+                             <i class="fa-solid fa-file-export"></i> Export Setup
+                         </button>
+                         <button id="import-btn" title="Import setup from XML file (replaces current)">
+                             <i class="fa-solid fa-file-import"></i> Import Setup
+                         </button>
+                         <input type="file" id="import-file-input" accept=".xml,application/xml" style="display: none;">
+                     </div>
+                     <!-- END: Moved Export/Import Buttons -->
+                 </div>
+                 <!-- END: Header for Optical Path -->
+
+                 <table id="elements-table">
+                     <thead>
+                         <tr>
+                             <th>Type</th>
+                             <th>Position (z)</th>
+                             <th>Properties</th>
+                             <th>Ellipse</th>
+                             <th>Output Vector [Ex, Ey]</th>
+                             <th>Intensity</th>
+                             <th>Actions</th>
+                         </tr>
+                     </thead>
+                     <tbody>
+                         <!-- Table rows will be added here -->
+                     </tbody>
+                 </table>
+                 <p>Note: Angles/Retardation in degrees.</p>
+             </div>
+             <!-- END: New Box for Optical Path Table -->
+
         </div>
 
         <div class="visualization">

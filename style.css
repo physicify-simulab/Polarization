@@ -13,6 +13,7 @@
   --bg-body:         #2b2b2b;  /* Body overall background (dark gray) */
   --bg-container:    #3a3a3a;  /* Main container background */
   --bg-panel:        #444444;  /* Controls and visualization panels */
+  --bg-box-inner:    #505050;  /* Slightly lighter for inner boxes */
   --bg-table:        #555555;  /* Table header backgrounds */
   --bg-input:        #666666;  /* Input field backgrounds */
   --bg-button:       #555555;  /* Button background */
@@ -62,12 +63,76 @@ body {
   padding: 15px;
   border: 1px solid var(--border);
   border-radius: 5px;
+  /* Removed direct flex properties, children will manage layout */
 }
+
+/* --- START: Styles for New Boxes --- */
+.add-element-box,
+.optical-path-box {
+  background-color: var(--bg-box-inner); /* Use slightly different bg */
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin-bottom: 15px; /* Space between boxes */
+}
+
+/* Remove margin from the last box */
+.optical-path-box {
+   margin-bottom: 0;
+}
+
+.add-element-box h3, /* Specific headings inside boxes */
+.optical-path-box h3 {
+    margin-bottom: 10px;
+    padding-left: 0; /* Remove general indent if applied */
+    color: var(--text-primary);
+    font-size: 1.1em; /* Slightly smaller than main H2 */
+}
+
+/* Controls within the add element box */
+.add-element-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between label, select, button */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+.add-element-controls label {
+    /* Optional: style label */
+    font-weight: bold;
+    flex-shrink: 0; /* Prevent label shrinking */
+}
+
+.add-element-controls select {
+    flex-grow: 1; /* Allow select to take available space */
+    min-width: 150px; /* Give it a minimum size */
+}
+
+/* Header within the optical path box (for H3 and buttons) */
+.optical-path-header {
+  display: flex;
+  justify-content: space-between; /* Pushes h3 left, buttons right */
+  align-items: center; /* Vertically align h3 and buttons */
+  margin-bottom: 15px; /* Space between header+buttons and the table */
+  flex-wrap: wrap; /* Allow wrapping */
+  gap: 10px; /* Gap when wrapping */
+}
+
+.optical-path-header h3 {
+    margin-bottom: 0; /* Remove bottom margin from h3 itself */
+    flex-shrink: 0; /* Prevent title from shrinking too much */
+}
+
+/* --- END: Styles for New Boxes --- */
+
+
+/* --- MODIFIED: Table Actions Styling --- */
 .table-actions {
-  margin-top: 15px; /* Space above */
-  margin-bottom: 10px; /* Space below, before h3 */
+  /* margin-top: 15px; */ /* REMOVED - Now controlled by optical-path-header flex */
+  /* margin-bottom: 10px; */ /* REMOVED */
   display: flex;
   gap: 10px; /* Space between buttons */
+  /* No longer needs to be block or full width by default */
 }
 
 .table-actions button {
@@ -78,6 +143,8 @@ body {
 .table-actions button i {
   margin-right: 6px; /* Space between icon and text */
 }
+/* --- END MODIFIED: Table Actions Styling --- */
+
 /* Visualization Panel */
 .visualization {
   flex: 1 1 450px;
@@ -193,13 +260,15 @@ body {
 }
 
 /* Headings */
-h1, h2, h3 {
+h1, h2 { /* Keep general H1, H2 styling */
   margin-bottom: 10px;
   /* Removed padding-top from general h2, h3 */
   color: var(--text-primary);
 }
-h2, h3 {
-    padding-left: 5px; /* Slight indent for section headers */
+/* Main H2 inside .controls */
+.controls > h2 {
+   padding-left: 5px; /* Keep slight indent for the main "Controls" heading */
+   margin-bottom: 15px; /* More space below main heading */
 }
 
 /* Modified H1 styles specifically for the info block and copyright move */
@@ -258,7 +327,7 @@ h1 {
 #elements-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  /* margin-top: 10px; */ /* REMOVED - spacing handled by optical-path-header margin */
   table-layout: fixed;
 }
 
@@ -480,13 +549,6 @@ select {
 }
 
 /* Specific Controls for Adding Elements */
-#add-element,
-#add-element-btn {
-  margin-left: 0;
-}
-#add-element {
-  margin-right: 5px;
-}
 #add-element-btn {
   background-color: var(--accent-green); /* Always green background */
   border-color: var(--accent-green);     /* Matching border */
@@ -671,15 +733,14 @@ font-style: italic;
     .controls {
         min-width: 550px; /* Allow controls panel to shrink a bit */
     }
-    .table-actions {
-      flex-direction: column; /* Stack buttons */
-      gap: 5px; /* Reduce gap */
-      align-items: flex-start; /* Align left */
-  }
-  .table-actions button {
-      width: 100%; /* Make buttons full width */
-      text-align: left; /* Align text left */
-  }
+    /* .table-actions { */ /* Keep horizontal on medium screens */
+      /* flex-direction: row; */
+      /* align-items: center; */
+   /* } */
+    /* .table-actions button { */
+       /* width: auto; */ /* Reset width */
+       /* text-align: center; */ /* Reset text align */
+   /* } */
     .visualization {
         min-width: 350px; /* Allow visualization panel to shrink a bit */
     }
@@ -712,7 +773,7 @@ font-style: italic;
       margin: 0 10px 8px 10px; /* Adjust h1 margin */
       padding: 6px 10px; /* Adjust h1 padding */
   }
-  h2, h3 { margin-bottom: 8px; }
+  .controls > h2, .add-element-box h3, .optical-path-box h3 { margin-bottom: 8px; } /* Reduce heading margins */
 
   .h1-info {
       font-size: 0.65em;
@@ -723,6 +784,20 @@ font-style: italic;
       gap: 10px;
   }
    .info-item { min-width: 60px; }
+
+   /* Adjust inner box padding */
+    .add-element-box,
+    .optical-path-box {
+        padding: 10px;
+    }
+    .optical-path-header {
+        margin-bottom: 10px; /* Reduce space above table */
+        gap: 5px; /* Reduce gap between h3 and buttons */
+    }
+   .table-actions button { /* Make export/import buttons smaller */
+      padding: 4px 8px;
+      font-size: 0.85em;
+   }
 
    #elements-table th, #elements-table td {
        padding: 4px 6px; /* Reduce table padding */
@@ -778,6 +853,25 @@ font-style: italic;
   }
    .info-content { text-align: left; }
    .h1-info a i { font-size: 1.5em; } /* Slightly smaller icon */
+
+    /* Adjust inner boxes */
+    .add-element-box,
+    .optical-path-box {
+        padding: 8px;
+    }
+    .add-element-controls {
+        flex-direction: column; /* Stack add controls vertically */
+        align-items: stretch; /* Make select/button full width */
+        gap: 5px;
+    }
+    .optical-path-header {
+        margin-bottom: 8px;
+         /* Keep flex-wrap: wrap */
+    }
+     .table-actions { /* Ensure buttons take full width if header wraps */
+        flex-basis: 100%;
+        justify-content: flex-start; /* Align buttons left */
+     }
 
    #elements-table th, #elements-table td {
        padding: 3px 4px; /* Further reduce table padding */
