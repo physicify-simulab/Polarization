@@ -2,7 +2,7 @@
 
 Simulate light polarization through optical systems using Jones Calculus directly in your browser. No installation required. Features an interactive 3D visualization and real-time updates.
 
-➡️ **[Live Demo & Introduction](https://physicify-simulab.github.io/Polarization/)** ⬅️
+➡️ **[Live Demo & Introduction](/Polarization/)** ⬅️
 *(Click Play on the intro page to launch)*
 
 ---
