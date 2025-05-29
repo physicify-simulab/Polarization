@@ -95,19 +95,7 @@
     <!-- Dynamic Footer Include -->
     <div id="footer-placeholder"></div>
 
-    <!-- Script for Header/Footer Includes -->
-    <script>
-        // Simple function to fetch and insert external HTML snippets
-        function includeHTML(elementId, filePath) {
-          fetch(filePath)
-            .then(response => response.text())
-            .then(data => {
-              document.getElementById(elementId).innerHTML = data;
-            })
-            .catch(error => console.error('Error loading ' + filePath, error));
-        }
-        includeHTML('header-placeholder', '/header.html');
-        includeHTML('footer-placeholder', '/footer.html');
-      </script>
+    <!-- Script to include Header/Footer -->
+    <script src="/layout.js" defer></script>
 </body>
 </html>
