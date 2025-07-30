@@ -27,7 +27,7 @@ let elementGroup;             // Contains element meshes, axes, labels, handles
 let reflectedCoordHelper = null; // Group for the reflected coordinate system axes
 
 // --- Visibility State (UI Controlled) ---
-let showLabels = false;
+let showLabels = true;
 let showEField = true;
 let showEnvelope = true;
 let isDarkMode = false;        // State for canvas theme (false = light, true = dark)
